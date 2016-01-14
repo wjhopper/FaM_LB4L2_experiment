@@ -1,56 +1,45 @@
 function resps = getSubjectInfo(varargin)
 
-% Calling Example 
-% c = { struct('name','sub_num','type','textinput','label','Subject Number','classcheck',@(x) (isnumeric(x) && ~isnan(x))), ...
-%       struct('name','group','type','dropdown','label','Group','values',{{'immediate','delay'}},'mustbe', {{'delay','session','2'}}), ...
-%       struct('name','session','type','dropdown','label','Session','values',{{'1','2'}},'mustbe', {{'1','group','immediate'}}) };
+% Calling Example
+% getSubjectInfo('subject', struct('label', 'Subject Number', 'type', 'textinput', 'validationFcn', @(x) (isnumeric(x) && ~isnan(x))), ...
+%                'group', struct('label' ,'Group', 'type', 'dropdown', 'values', {{'immediate','delay'}}), ...
+%                'session', struct('label', 'Session', 'type', 'dropdown', 'values', {{'1','2'}}));
 
-% getSubjectInfo('components',c);
+%% --- parse and validate input --- %%
 
-% parse input arguments
 ip = inputParser;
-ip.KeepUnmatched = true;
-addParamValue(ip,'components', {struct('name','sub_num','type','textinput','label','Subject Number')}, @iscell);
-addParamValue(ip,'win_name', 'Input Subject Info', @ischar);
-parse(ip,varargin{:}); 
-s= ip.Results.components;
-t = ip.Results.win_name;
+ip.KeepUnmatched = true; % can have an arbitrary number of fields so this is important
+addParamValue(ip,'title', 'Input Subject Info', @ischar); %#ok<*NVREPL> dont warn about addParamValue
+parse(ip,varargin{:});
+fields = validateInputStruct(ip.Unmatched);
+%% --- Initialize the blank GUI window --- %%
 
 %some gui object constants to use
+width = 250;
 margin = 10;
 padding = 5;
-BTN_size = 30;
-TI_size = 30;
-DD_size = 30;
-CHK_size = 20;
+button_size = 30;
+textinput_size = 30;
+dropdown_size = 30;
+checkbox_size = 20;
 label_size = 20;
-table = {'textinput',{'edit',TI_size}; 'check',{'checkbox',CHK_size};'dropdown',{'popupmenu',DD_size}};
-height = BTN_size + (3*margin);
-width = 250;
+height = button_size + (3*margin);
+lookupTable = struct('textinput', {'edit', textinput_size},'check', {'checkbox', checkbox_size}, ...
+                     'dropdown', {'popupmenu' ,dropdown_size}, 'label',{'Tag', label_size});
 
-% figure out correct size
-for i=1:numel(s)
-    if any(strcmp('type',fieldnames(s{i})))
-        tmp = table{strcmp(s{i}.type,table(:,1)),2};
-        s{i}.type = tmp{1}; %#ok<FXSET>
-        height = height + tmp{2} + label_size;
-    else
-        s{i}.type = 'textinput'; %#ok<FXSET>
-        height = height + label_size + TI_size + label_size;
-    end
-end
-
+                 
 % create figure 
 dims =  get(0, 'ScreenSize');
-fig = dialog('Name',t,'Position',[(dims(3)/2) + width/2, (dims(4)/2) + height/2, width, height], 'ToolBar','None','MenuBar','none', ...
+fig = dialog('Name',ip.Results.title,'Position',[(dims(3)/2) + width/2, (dims(4)/2) + height/2, width, height], 'ToolBar','None','MenuBar','none', ...
     'NumberTitle','off','Visible','off');
 
-% add elements to fig
+% add elements to fig iteratively
 offset= 0;
 value_objs=[];
 string_objs=[];
 drop_objs=[];
 title_obs=[];
+
 for i=1:numel(s)
     
     if any(strcmp('label',fieldnames(s{i})))
@@ -71,7 +60,7 @@ for i=1:numel(s)
         props.Background ='w';
         props.FontSize= 11;
         props.Tag = s{i}.name;
-        props.Position = [margin, height - offset - padding - label_size - TI_size, width-2*margin, TI_size];
+        props.Position = [margin, height - offset - padding - label_size - textinput_size, width-2*margin, textinput_size];
         title_obs(i) = uicontrol(fig,'Style','text','String',lab, 'Horiz','left','Tag',[ s{i}.name '_lab'],  ... 
                         'Position',[margin, height - offset - margin - label_size, width-2*margin, label_size]); %#ok<*AGROW>
         if any(strcmp('values',fieldnames(s{i})))
@@ -83,7 +72,7 @@ for i=1:numel(s)
     
     if strcmp(s{i}.type, 'edit')
         string_objs(i) = uicontrol(fig,props,'Style','edit', 'String', vals);
-        offset = offset +  TI_size + label_size;
+        offset = offset +  textinput_size + label_size;
     elseif strcmp(s{i}.type, 'popupmenu')
         if any(strcmp('default',fieldnames(s{i}))) && s{i}.default <= numel(vals)
             selection = s{i}.default;
@@ -91,7 +80,7 @@ for i=1:numel(s)
             selection = 1;
         end
         drop_objs(i) = uicontrol(fig,props,'Style','popupmenu', 'String', vals,'Value',selection);
-        offset = offset +  DD_size + label_size;
+        offset = offset +  dropdown_size + label_size;
     else
         if any(strcmp('value',fieldnames(s{i})))
             vals = s{i}.value;
@@ -99,8 +88,8 @@ for i=1:numel(s)
             vals= 0;
         end
         value_objs(end+1) = uicontrol(fig,props,'Style','checkbox','String',s{i}.label,'Val',s{i}.values,'Tag',s{i}.name, ...
-        'Position',[margin, height - offset - margin - CHK_size, width-2*margin, CHK_size]);
-        offset = offset + CHK_size;
+        'Position',[margin, height - offset - margin - checkbox_size, width-2*margin, checkbox_size]);
+        offset = offset + checkbox_size;
     end
 end    
 % blank out missings
@@ -110,9 +99,9 @@ drop_objs(drop_objs==0)=[];
 
 % add buttons
 uicontrol(fig, 'Style','pushbutton','String','Run','Tag','RunBtn','Callback' ,@done ,...
-          'Pos', [(width/2)+padding height-(height-10) ((width-2*margin)/2)-margin, BTN_size]) 
+          'Pos', [(width/2)+padding height-(height-10) ((width-2*margin)/2)-margin, button_size]) 
 uicontrol(fig, 'Style','pushbutton','String','Cancel','Tag','CancelBtn','Callback' ,@cancel , ...
-          'Pos', [margin height-(height-10) ((width-2*margin)/2)-padding, BTN_size])       
+          'Pos', [margin height-(height-10) ((width-2*margin)/2)-padding, button_size])       
 
 % Wait for input
 set(fig,'Visible','on');
@@ -242,25 +231,58 @@ function cancel(obj,evd)
 end
 
 function str = CurrentPopupString(hh,action,strValue)
-%# getCurrentPopupString returns the currently selected string in the popupmenu with handle hh
+    %# getCurrentPopupString returns the currently selected string in the popupmenu with handle hh
 
-%# could test input here
-if ~ishandle(hh) || strcmp(get(hh,'Type'),'popupmenu')
-error('getCurrentPopupString needs a handle to a popupmenu as input')
+    %# could test input here
+    if ~ishandle(hh) || strcmp(get(hh,'Type'),'popupmenu')
+    error('getCurrentPopupString needs a handle to a popupmenu as input')
+    end
+
+    %# get the string - do it the readable way
+    list = get(hh,'String');
+    val = get(hh,'Value');
+    switch action
+        case 'get'
+            if iscell(list)
+               str = list{val};
+            else
+               str = list(val,:);
+            end
+        case 'set'
+            set(hh,'Value',find(strcmp(strValue,list)))
+            str=strValue;
+    end
 end
 
-%# get the string - do it the readable way
-list = get(hh,'String');
-val = get(hh,'Value');
-switch action
-    case 'get'
-        if iscell(list)
-           str = list{val};
+function guiFields = validateInputStruct(guiFields)
+
+validProperties = {'type','values','label', 'validationFcn'};
+errorGeneric = '\nFeild ''%s'' is missing a value for the required property ''%s''.\n';
+
+    for i = fieldnames(guiFields)'
+        current = i{1};
+        currentFieldProperties = fieldnames(guiFields.(current));
+        difference = strcat('"', setdiff(currentFieldProperties, validProperties), '"');
+        assert(all(ismember(currentFieldProperties, validProperties)), ...
+               strjoin({'Field "%s" contains unrecognized properties:', difference{:}}, ' '), ...
+               current) %#ok<CCAT>
+        assert( (isfield(guiFields.(current),'type') && ismember(guiFields.(current).type, {'textinput','dropdown','check'}) ), ...
+               [errorGeneric '''type'' must be specified as either ''textinput'', ''dropdown'', or ''check'' for each field.'], ...
+               current, 'type')
+        assert( isfield(guiFields.(current),'label'), ...
+               [errorGeneric '''type'' must be specified as either ''textinput'', ''dropdown'', or ''check'' for each field.'], ...
+               current, 'type')
+        if strcmp('dropdown', guiFields.(current).type)
+            assert(isfield(guiFields.(current),'values') && all(~cellfun(@isempty, guiFields.(current).values)), ...
+                   [errorGeneric 'Fields with ''type'' set to ''dropdown'' must use the property ''values'' to populate the menu options.'], ...
+                   current, 'values');
         else
-           str = list(val,:);
+            if isfield(guiFields.(current),'values')
+                guiFields.(current).values = '';
+            end
         end
-    case 'set'
-        set(hh,'Value',find(strcmp(strValue,list)))
-        str=strValue;
-end
+        if ~isfield(guiFields.(current),'validationFcn')
+            guiFields.(current).validationFcn = @(x) true ;
+        end
+    end
 end
