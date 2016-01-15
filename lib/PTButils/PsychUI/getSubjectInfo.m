@@ -1,288 +1,220 @@
-function resps = getSubjectInfo(varargin)
+function responses = getSubjectInfo(varargin)
 
-% Calling Example
-% getSubjectInfo('subject', struct('label', 'Subject Number', 'type', 'textinput', 'validationFcn', @(x) (isnumeric(x) && ~isnan(x))), ...
-%                'group', struct('label' ,'Group', 'type', 'dropdown', 'values', {{'immediate','delay'}}), ...
-%                'session', struct('label', 'Session', 'type', 'dropdown', 'values', {{'1','2'}}));
+    % Calling Example
+    % getSubjectInfo('subject', struct('title', 'Subject Number', 'type', 'textinput', 'validationFcn', @(x) (isnumeric(x) && ~isnan(x))), ...
+    %                'group', struct('title' ,'Group', 'type', 'dropdown', 'values', {{'immediate','delay'}}), ...
+    %                'session', struct('title', 'Session', 'type', 'dropdown', 'values', {{'1','2'}}));
 
-%% --- parse and validate input --- %%
+    %% --- parse and validate input --- %%
 
-ip = inputParser;
-ip.KeepUnmatched = true; % can have an arbitrary number of fields so this is important
-addParamValue(ip,'title', 'Input Subject Info', @ischar); %#ok<*NVREPL> dont warn about addParamValue
-parse(ip,varargin{:});
-fields = validateInputStruct(ip.Unmatched);
-%% --- Initialize the blank GUI window --- %%
+    ip = inputParser;
+    ip.KeepUnmatched = true; % can have an arbitrary number of fields so this is important
+    addParamValue(ip,'title', 'Input Subject Info', @ischar); %#ok<*NVREPL> dont warn about addParamValue
+    parse(ip,varargin{:});
+    fields = validateInputStruct(ip.Unmatched);
+    %% --- Initialize the blank GUI window --- %%
 
-%some gui object constants to use
-width = 250;
-margin = 10;
-padding = 5;
-button_size = 30;
-textinput_size = 30;
-dropdown_size = 30;
-checkbox_size = 20;
-label_size = 20;
-height = button_size + (3*margin);
-lookupTable = struct('textinput', {'edit', textinput_size},'check', {'checkbox', checkbox_size}, ...
-                     'dropdown', {'popupmenu' ,dropdown_size}, 'label',{'Tag', label_size});
-
+    %some constants to use
+    dims =  get(0, 'ScreenSize');
+    offset= 0;
+    width = 250;
+    margin = 10;
+    padding = 5;
+    button_size = 30;
+    title_size = 20;
+    text_size = 30;
+    check_size = 20;
+    types = struct2cell(structfun(@(s) s.type, fields, 'UniformOutput', false));
+    height = ((title_size+text_size)*sum(strcmp('textinput', types))) + ...
+        ((title_size+text_size)*sum(strcmp('dropdown', types))) + ...
+        (check_size*sum(strcmp('check', types))) +  button_size + (3*margin);
                  
-% create figure 
-dims =  get(0, 'ScreenSize');
-fig = dialog('Name',ip.Results.title,'Position',[(dims(3)/2) + width/2, (dims(4)/2) + height/2, width, height], 'ToolBar','None','MenuBar','none', ...
-    'NumberTitle','off','Visible','off');
+    % create the figure
+    fig = dialog('Name', ip.Results.title, 'Position', [(dims(3)/2) + width/2, (dims(4)/2) + height/2, width, height], ... 
+                 'ToolBar','None','MenuBar','none', 'NumberTitle','off','Visible','off');
 
-% add elements to fig iteratively
-offset= 0;
-value_objs=[];
-string_objs=[];
-drop_objs=[];
-title_obs=[];
+    % Add objects to the gui iteratively
+    names = fieldnames(fields);
+    for i = 1:length(names)
+        % props.callback specifies the function that gets called whenever the user
+        % interacts with the input GUI. The first element of the cell array is
+        % a handle to the callback function and addtional elements contain
+        % variables which will be passed to the function.
+        props.callback = {@interact, names{i}};
+        props.FontSize = 11;
+        props.Tag = names{i};
+        
+        % If a field is a drop down or text input field, first give it a title by
+        % using its 'title' property to create a text uicontrol object
+        if any(ismember(fields.(names{i}).type, {'textinput','dropdown'}))
+            props.Horiz ='left';
+            props.Background = 'w';
+            props.Position = [margin, height - offset - padding - title_size - text_size, width-2*margin, text_size];
+            uicontrol(fig, 'Style', 'text', 'String', fields.(names{i}).title, ...
+                'Horiz', 'left', 'Tag', [ names{i} '_title'], ...
+                'Position', [margin, height - offset - margin - title_size, width-2*margin, title_size]);
+        end
 
-for i=1:numel(s)
-    
-    if any(strcmp('label',fieldnames(s{i})))
-        lab = s{i}.label;
-    else
-        lab = ['Field' num2str(i)];
-         s{i}.label = lab;
+        % Next, fill in their values and set appearace properties
+        % if the initial values pass validation, set their userdata values
+        % to true
+        if strcmp(types{i}, 'textinput')
+            fields.(names{i}).handle = uicontrol(fig, props, 'Style', 'edit', 'String', fields.(names{i}).values);
+            if fields.(names{i}).validationFcn(fields.(names{i}).values)
+                set(fields.(names{i}).handle, 'UserData',struct('validInput', true));
+            end            
+        elseif strcmp(types{i}, 'dropdown')
+            fields.(names{i}).handle = uicontrol(fig, props, 'Style', 'popupmenu', 'String', fields.(names{i}).values, 'Value', 1);
+            if fields.(names{i}).validationFcn(getPopupString(fields.(names{i}).handle))
+                set(fields.(names{i}).handle, 'UserData',struct('validInput', true));
+            end           
+        else % The only alternative is checkbox   
+            fields.(names{i}).handle = uicontrol(fig, props, 'Style', 'checkbox', 'String', fields.(names{i}).title, ...
+                'Val', fields.(names{i}).values, 'Position',[margin, height - offset - margin - check_size, width-2*margin, check_size]);
+            if fields.(names{i}).validationFcn(fields.(names{i}).values)
+                set(fields.(names{i}).handle, 'UserData',struct('validInput', true));
+            end          
+        end
+        offset = offset + (strcmp(types{i},'checkbox')*check_size) + (~strcmp(types{i},'checkbox')*text_size) + ...
+            (~strcmp(types{i},'checkbox')*title_size);
     end
-    
-    if any(strcmp('mustbe',fieldnames(s{i}))) || any(strcmp('classcheck',fieldnames(s{i})))
-        props.callback = {@interact, s{i}};
-    end
-    
-% if its a drop down or text input field, give it a title and check its
-% values setting, and assign its other properties
-    if any(strcmp(s{i}.type, {'edit','popupmenu'}))
-        props.Horiz ='left';
-        props.Background ='w';
-        props.FontSize= 11;
-        props.Tag = s{i}.name;
-        props.Position = [margin, height - offset - padding - label_size - textinput_size, width-2*margin, textinput_size];
-        title_obs(i) = uicontrol(fig,'Style','text','String',lab, 'Horiz','left','Tag',[ s{i}.name '_lab'],  ... 
-                        'Position',[margin, height - offset - margin - label_size, width-2*margin, label_size]); %#ok<*AGROW>
-        if any(strcmp('values',fieldnames(s{i})))
-            vals = s{i}.values;
-        else
-            vals= [];
-        end 
-    end
-    
-    if strcmp(s{i}.type, 'edit')
-        string_objs(i) = uicontrol(fig,props,'Style','edit', 'String', vals);
-        offset = offset +  textinput_size + label_size;
-    elseif strcmp(s{i}.type, 'popupmenu')
-        if any(strcmp('default',fieldnames(s{i}))) && s{i}.default <= numel(vals)
-            selection = s{i}.default;
-        else 
-            selection = 1;
-        end
-        drop_objs(i) = uicontrol(fig,props,'Style','popupmenu', 'String', vals,'Value',selection);
-        offset = offset +  dropdown_size + label_size;
-    else
-        if any(strcmp('value',fieldnames(s{i})))
-            vals = s{i}.value;
-        else
-            vals= 0;
-        end
-        value_objs(end+1) = uicontrol(fig,props,'Style','checkbox','String',s{i}.label,'Val',s{i}.values,'Tag',s{i}.name, ...
-        'Position',[margin, height - offset - margin - checkbox_size, width-2*margin, checkbox_size]);
-        offset = offset + checkbox_size;
-    end
-end    
-% blank out missings
-value_objs(value_objs==0)=[];
-string_objs(string_objs==0)=[];
-drop_objs(drop_objs==0)=[];
 
-% add buttons
-uicontrol(fig, 'Style','pushbutton','String','Run','Tag','RunBtn','Callback' ,@done ,...
-          'Pos', [(width/2)+padding height-(height-10) ((width-2*margin)/2)-margin, button_size]) 
-uicontrol(fig, 'Style','pushbutton','String','Cancel','Tag','CancelBtn','Callback' ,@cancel , ...
-          'Pos', [margin height-(height-10) ((width-2*margin)/2)-padding, button_size])       
+    % add cancel and run buttons
+    uicontrol(fig, 'Style','pushbutton', 'String', 'Run', 'Tag', 'RunBtn', 'Callback', @(~,~)  uiresume(gcbf), ...
+              'Pos', [(width/2)+padding height-(height-10) ((width-2*margin)/2)-margin, button_size]) 
+    uicontrol(fig, 'Style','pushbutton','String','Cancel','Tag','CancelBtn','Callback' , @(~,~) delete(gcbf) , ...
+              'Pos', [margin height-(height-10) ((width-2*margin)/2)-padding, button_size])
 
-% Wait for input
-set(fig,'Visible','on');
-uiwait(fig);
+    % Add the fields info to the userdata of the parent object so we can look it up and update it as needed      
+    set(fig, 'UserData', fields);
+    
+    % Wait for input
+    set(fig,'Visible','on');
+    uiwait(fig);
 
-% Parse input
-if ishghandle(fig) 
-    if strcmp(get(fig,'UserData'),'OK'),
-        if ~exist('resps','var')
-            resps=struct();
-        end
-        for j=1:numel(string_objs)
-            resps.(get(string_objs(j),'Tag')) = get(string_objs(j),'String');
-        end
-        for j=1:numel(drop_objs)
-            resps.(get(drop_objs(j),'Tag')) =  CurrentPopupString(drop_objs(j),'get');
-        end
-        for j=1:numel(value_objs)
-            resps.(get(value_objs(j),'Tag')) = get(value_objs(j),'Value');
-        end
+    % Parse input
+    if ishghandle(fig)
+        responses = extractInput(get(fig, 'UserData'));
         delete(fig);
-    end
-else
-  resps=[];  %#ok<NASGU>
-end
-
-end
-
-function interact(obj, evd, s)
-    if isempty(evd)
-        evd = false;
-    end
-    if strcmp(s.type, 'edit') && isempty(get(obj,'String'))
-        return
-    end
-    
-    if any(strcmp('classcheck',fieldnames(s))) && strcmp(s.type, 'edit')
-        if ~s.classcheck(str2double(get(obj,'String')))
-            set(obj,'UserData','bad')
-            msg = strjoin({'Incorrect data type for', s.label, 'field'},' ');
-        else
-            set(obj,'UserData','good')
-        end
-    end
-    
-	if ~exist('msg','var') && any(strcmp('mustbe',fieldnames(s))) && ~ischar(s.mustbe)
-        cond = s.mustbe;
-        h = findobj('Tag',cond{2});
-        switch get(obj,'Style')
-            case 'edit'
-                data = str2double(get(obj,'String'));
-            case 'popupmenu'
-                data = CurrentPopupString(obj,'get');
-            case 'checkbox'
-                data = get(obj,'Values');
-        end 
-        switch get(h,'Style')
-            case 'edit'
-                str = get(h,'String');
-                if (any(strcmp(str,cond{3})) && ~strcmp(data,cond{1}))
-                    set(obj,'UserData','bad')
-                    msg = strjoin({s.label 'must be' cond{1} 'when' cond{2} 'is' cond{3} }, ' ');
-                else
-                    set(obj,'UserData','good')
-                end
-            case 'popupmenu'
-                if (any(strcmp(CurrentPopupString(h,'get'), cond{3})) &&  ~strcmp(data,cond{1}))  
-                    set(obj,'UserData','bad')
-                    msg = strjoin({s.label 'must be' cond{1} 'when' cond{2} 'is' cond{3} }, ' ');
-                else
-                    set(obj,'UserData','good')
-                end
-            case 'checkbox'
-                if get(h,'Values') == cond{3} && data ~= cond{1}
-                    set(obj,'UserData','bad')
-                    msg = strjoin({s.label 'must be' cond{1} 'when' cond{2} 'is' cond{3} }, ' ');
-                else
-                    set(obj,'UserData','good')
-                end
-        end 
-	end
-    if strcmp(get(obj,'UserData'),'bad');
-        lab_handle = findobj('Tag',[s.name '_lab']);
-        set(lab_handle,'String',msg);
-        set(lab_handle,'Background','r');
-        set(findobj('Tag','RunBtn'),'Enable','off')
     else
-        lab_handle = findobj('Tag',[s.name '_lab']);
-        set(lab_handle,'String',s.label);
-        set(lab_handle,'Background',[.94 .94 .94]); 
-        if evd ~= 1 &&  exist('h','var') && ishghandle(h)
-            callbackCell = get(h,'Callback');
-            callbackCell{1}(h,1,callbackCell{2:end});
-        end
-        if isempty(findobj('UserData','bad'));
-            set(findobj('Tag','RunBtn'),'Enable','on');
-        end
+        responses = [];
     end
     
 end
 
-function doneKeyPress(obj, evd) %#ok
-    switch(evd.Key)
-      case {'return'}
-        if ~strcmp(get(obj,'UserData'),'Cancel')
-          set(gcbf,'UserData','OK');
-          uiresume(gcbf);
+function allFields = extractInput(allFields)
+    names = fieldnames(allFields);
+    for i = 1:length(names)
+        if strcmp('textinput',allFields.(names{i}).type)
+            allFields.(names{i}).input = get(allFields.(names{i}).handle, 'String');
+        elseif strcmp('dropdown',allFields.(names{i}).type)
+            allFields.(names{i}).input = getPopupString(allFields.(names{i}).handle);
         else
-          delete(gcbf)
+            allFields.(names{i}).input = get(allFields.(names{i}).handle,'Value');
         end
-      case 'escape'
-        delete(gcbf)
     end
 end
 
-function done(obj, evd) %#ok
-    if ~strcmp(get(obj,'UserData'),'Cancel')
-      set(gcbf,'UserData','OK');
-      uiresume(gcbf);
+function interact(objectHandle, ~, currentField)
+% the ~ is a placeholders for eventData
+    
+    % Extract the updates from all the fields, and update the global userdata
+    parent = get(objectHandle,'Parent');
+    allFields = extractInput(get(parent, 'UserData'));
+    set(parent, 'UserData', allFields)    
+    if ismember(allFields.(currentField).type, {'textinput','dropdown'})
+        titleHandle = findobj('Tag',[currentField '_title']);
     else
-      delete(gcbf)
+        titleHandle = objectHandle;
+    end    
+
+    [valid, message] = allFields.(currentField).validationFcn(allFields.(currentField).input, allFields);
+    if ~ valid
+       set(allFields.(currentField).handle ,'UserData',struct('validInput', false));
+       set(findobj('Tag','RunBtn'),'Enable','off')              
+       set(titleHandle,'String', message);
+       set(titleHandle,'Background','r');
+    else
+       set(allFields.(currentField).handle, 'UserData',struct('validInput', true));
+       set(titleHandle,'String',allFields.(currentField).title);
+       set(titleHandle,'Background',[.94 .94 .94]);
+       inputStatus = structfun(@(s) get(s, 'UserData'), structfun(@(s) s.handle, allFields, 'UniformOutput', false), 'UniformOutput', false);
+       if all(structfun(@(s) s.validInput, inputStatus));
+           set(findobj('Tag','RunBtn'),'Enable','on');
+       end
     end
 end
 
-function cancel(obj,evd)
-     delete(gcbf)
-end
-
-function str = CurrentPopupString(hh,action,strValue)
-    %# getCurrentPopupString returns the currently selected string in the popupmenu with handle hh
-
-    %# could test input here
-    if ~ishandle(hh) || strcmp(get(hh,'Type'),'popupmenu')
-    error('getCurrentPopupString needs a handle to a popupmenu as input')
+function str = getPopupString(objectHandle)
+    %# getCurrentPopupString returns the currently selected string in the popupmenu with handle objectHandle
+    if ~ishandle(objectHandle) || ~strcmp(get(objectHandle,'Style'),'popupmenu')
+        error('getCurrentPopupString needs a handle to a popupmenu as input')
     end
 
-    %# get the string - do it the readable way
-    list = get(hh,'String');
-    val = get(hh,'Value');
-    switch action
-        case 'get'
-            if iscell(list)
-               str = list{val};
-            else
-               str = list(val,:);
-            end
-        case 'set'
-            set(hh,'Value',find(strcmp(strValue,list)))
-            str=strValue;
+    %# get the string the readable way
+    list = get(objectHandle,'String');
+    val = get(objectHandle,'Value');
+    if iscell(list)
+        str = list{val};
+    else
+        str = list(val,:);
     end
 end
 
 function guiFields = validateInputStruct(guiFields)
 
-validProperties = {'type','values','label', 'validationFcn'};
+validProperties = {'type','values','title', 'validationFcn'};
 errorGeneric = '\nFeild ''%s'' is missing a value for the required property ''%s''.\n';
 
     for i = fieldnames(guiFields)'
+        
         current = i{1};
         currentFieldProperties = fieldnames(guiFields.(current));
+
+        % Make sure there are no unknown properties specified
         difference = strcat('"', setdiff(currentFieldProperties, validProperties), '"');
         assert(all(ismember(currentFieldProperties, validProperties)), ...
-               strjoin({'Field "%s" contains unrecognized properties:', difference{:}}, ' '), ...
-               current) %#ok<CCAT>
+            strjoin({'Field "%s" contains unrecognized properties:', difference{:}}, ' '), ...
+            current) %#ok<CCAT>
+
+        % Make sure a valid type of ui object is specified for all fields.
         assert( (isfield(guiFields.(current),'type') && ismember(guiFields.(current).type, {'textinput','dropdown','check'}) ), ...
-               [errorGeneric '''type'' must be specified as either ''textinput'', ''dropdown'', or ''check'' for each field.'], ...
-               current, 'type')
-        assert( isfield(guiFields.(current),'label'), ...
-               [errorGeneric '''type'' must be specified as either ''textinput'', ''dropdown'', or ''check'' for each field.'], ...
-               current, 'type')
+            [errorGeneric '''type'' must be ''textinput'', ''dropdown'', or ''check'' for each field.'], ...
+            current, 'type')
+
+        % Make sure there are no unknown properties specified
+        assert( isfield(guiFields.(current),'title') && ischar(guiFields.(current).title), ...
+               [errorGeneric '''title'' must be specified with a charater string for each field.'], ...
+               current, 'title')                
+        
+        % What we do with value depends on the ui object type
+        % If its a dropdown, value has to be given by the caller
         if strcmp('dropdown', guiFields.(current).type)
-            assert(isfield(guiFields.(current),'values') && all(~cellfun(@isempty, guiFields.(current).values)), ...
-                   [errorGeneric 'Fields with ''type'' set to ''dropdown'' must use the property ''values'' to populate the menu options.'], ...
+            assert(isfield(guiFields.(current),'values') && ~isempty(guiFields.(current).values(1)), ...
+                [errorGeneric 'Fields with ''type'' set to ''dropdown'' must use the property ''values'' to populate the menu options.'], ...
                    current, 'values');
-        else
-            if isfield(guiFields.(current),'values')
-                guiFields.(current).values = '';
-            end
+        % If its a checkbox and value is given, it has to be zero or 1
+        elseif strcmp('check', guiFields.(current).type) && isfield(guiFields.(current), 'values')
+            assert(is.member(guiFields.(current), {0,1}), ...
+                [errorGeneric 'Fields with ''type'' set to ''check'' can only set ''values'' to 0 (unselected) or 1 (selected).'], ...
+                current, 'values');
+        %  If its a checkbox with no value given, use zero
+        elseif strcmp('check', guiFields.(current).type) && ~isfield(guiFields.(current), 'values')
+            guiFields.(current).values = [];
+        %  If its a text input box with no value given, use an empty string         
+        elseif strcmp('textinput', guiFields.(current).type) && ~isfield(guiFields.(current), 'values')
+            guiFields.(current).values = 0;            
         end
+
+        % if no validation function is given, use a dummy function that
+        % is always true. If you don't care, we don't care!
         if ~isfield(guiFields.(current),'validationFcn')
-            guiFields.(current).validationFcn = @(x) true ;
+            guiFields.(current).validationFcn = @dummyFunction;
         end
     end
+end
+
+function [valid, msg] =  dummyFunction(varargin)
+    valid = true;
+    msg = 'You should never see this?';
 end
