@@ -1,2 +1,2 @@
-# PTB-boilerplate
-A basic template to build Psychtoolbox experiments on top of
+# LB4L2
+Version 2 of LB4L experiment
