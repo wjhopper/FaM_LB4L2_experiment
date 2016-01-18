@@ -89,20 +89,19 @@ targetIndex = repmat(1:(size(studyLists)/constants.CTratio), constants.CTratio, 
 targetIndex = targetIndex(:);
 studyLists.target = stimlist.WORD(targetIndex);
 
-% Randomize the order of conditions within lists
-listOrders = cellfun(@randperm,repmat({20},10,1),'UniformOutput',false);
-studyLists = studyLists([listOrders{:}],:);
 % Add list identifier
 listID = repmat(1:constants.nLists, size(studyLists,1)/constants.nLists, 1);
 studyLists.list = listID(:);
-studyLists.onset = nan(size(studyLists,1),1); % add column to hold onset timestamps
+% add column to hold onset timestamps
+studyLists.onset = nan(size(studyLists,1),1);
+% Randomize the order of conditions within lists
+studyLists = randomizeLists(studyLists);
 
 % Create practice lists
 pracLists = studyLists(~strcmp(studyLists.practice,'C'),:);
 assert(size(pracLists,1)== .6*size(studyLists,1))
 % Randomize the order of the practice lists
-listOrders = cellfun(@randperm,repmat({12},10,1),'UniformOutput',false);
-pracLists = pracLists([listOrders{:}],:);
+pracLists = randomizeLists(pracLists);
 % add the columns for the reponses
 pracLists = [pracLists, repmat(response,size(pracLists,1))];
 % counterbalance the order of the study/test practices
@@ -116,11 +115,12 @@ end
 finalLists = studyLists(studyLists.finalTest == 1,:);
 assert(size(finalLists,1)== .5*size(studyLists,1))
 % Randomize the order of the final test lists lists
-listOrders = cellfun(@randperm,repmat({10},10,1),'UniformOutput',false);
-finalLists = finalLists([listOrders{:}],:);
+finalLists = randomizeLists(finalLists);
 % add the columns for the reponses
 finalLists = [finalLists, repmat(response,size(finalLists,1))];
 
+
+%% Open the PTB window
 [window, constants] = windowSetup(constants, input);
 
 %% end of the experiment %%
@@ -203,5 +203,13 @@ function [window, constants] = windowSetup(constants, input)
     catch
         psychrethrow(psychlasterror);
         windowCleanup(constants)
+    end
+end
+
+function data = randomizeLists(data)
+    for i = unique(data.list)'
+        rows = data.list == i;
+        items = data(rows,:);
+        data(rows,:) = items(randperm(sum(rows)),:);
     end
 end
