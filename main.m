@@ -1,5 +1,6 @@
 function exit_stat = main(varargin)
 
+exit_stat = 1; %#ok<NASGU> assume that we exited badly if ever exit before this gets reassigned
 % use the inputParser class to deal with arguments
 ip = inputParser;
 %#ok<*NVREPL> dont warn about addParamValue
@@ -55,54 +56,11 @@ end
 % a file path!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
-PsychDefaultSetup(2);
-% Choose a screen to display on
-screens = Screen('Screens');
-if numel(screens > 1)
-    constants.win = max(screens);
-else
-    constants.win =screens;
-end
-% Set the size of the PTB window based on screen size and debug level
-constants.res=Screen('Resolution',constants.win); % Query Screen Resolution
-dims= [constants.res.width constants.res.height];
-if any(input.debugLevel == [0 1])
-        constants.screen_scale = reshape((dims' * [(1/8),(7/8)]),1,[]);
-else
-    constants.screen_scale = reshape((dims' * [0,1]),1,[]);
-end
+[window, constants] = windowSetup(constants, input);
 
-try
-    HideCursor();
-    [window, constants.winRect] = Screen('OpenWindow', constants.win, (2/3)*WhiteIndex(constants.win) , round(constants.screen_scale));
-% define some landmark locations to be used throughout
-    [constants.xCenter, constants.yCenter] = RectCenter(constants.winRect);
-    constants.center = [constants.xCenter, constants.yCenter];
-    constants.left_half=[constants.winRect(1),constants.winRect(2),constants.winRect(3)/2,constants.winRect(4)];
-    constants.right_half=[constants.winRect(3)/2,constants.winRect(2),constants.winRect(3),constants.winRect(4)];
-    constants.top_half=[constants.winRect(1),constants.winRect(2),constants.winRect(3),constants.winRect(4)/2];
-    constants.bottom_half=[constants.winRect(1),constants.winRect(4)/2,constants.winRect(3),constants.winRect(4)];
-    
-% Get some the inter-frame interval, refresh rate, and the size of our window
-    constants.ifi = Screen('GetFlipInterval', window);
-    constants.hertz = FrameRate(window); % hertz = 1 / ifi
-    constants.nominalHertz = Screen('NominalFrameRate', window);
-    [constants.width, constants.height] = Screen('DisplaySize', constants.win);   %in mm 
-
-% Font Configuration
-    Screen('TextFont',window, 'Arial');  % Set font to Arial
-    Screen('TextSize',window, 28);       % Set font size to 28
-    Screen('TextStyle', window, 1);      % 1 = bold font
-    Screen('TextColor', window, [0 0 0]); % Black text
-
-% end of the experiment
-     windowCleanup(constants)
-     exit_stat=0;
-catch
-    exit_stat=1;    
-    psychrethrow(psychlasterror);    
-    windowCleanup(constants)
-end
+%% end of the experiment %%
+windowCleanup(constants)
+exit_stat=0;
 end % end main()
 
 function overwriteCheck = makeSubjectDataChecker(directory, extension, debugLevel)
@@ -137,4 +95,43 @@ end
 function windowCleanup(constants)
     sca; % alias for screen('CloseAll')
     rmpath(constants.lib_dir,constants.root_dir);
+end
+
+function [window, constants] = windowSetup(constants, input)
+    PsychDefaultSetup(2);
+    constants.screenNumber = max(Screen('Screens')); % Choose a monitor to display on
+    constants.res=Screen('Resolution',constants.screenNumber); % get screen resolution
+    constants.dims = [constants.res.width constants.res.height];
+    if any(input.debugLevel == [0 1])
+    % Set the size of the PTB window based on screen size and debug level
+        constants.screen_scale = [];
+    else
+        constants.screen_scale = reshape((constants.dims' * [(1/8),(7/8)]),1,[]);
+    end
+
+    try
+        [window, constants.winRect] = Screen('OpenWindow', constants.screenNumber, (2/3)*WhiteIndex(constants.screenNumber) , round(constants.screen_scale));
+    % define some landmark locations to be used throughout
+        [constants.xCenter, constants.yCenter] = RectCenter(constants.winRect);
+        constants.center = [constants.xCenter, constants.yCenter];
+        constants.left_half=[constants.winRect(1),constants.winRect(2),constants.winRect(3)/2,constants.winRect(4)];
+        constants.right_half=[constants.winRect(3)/2,constants.winRect(2),constants.winRect(3),constants.winRect(4)];
+        constants.top_half=[constants.winRect(1),constants.winRect(2),constants.winRect(3),constants.winRect(4)/2];
+        constants.bottom_half=[constants.winRect(1),constants.winRect(4)/2,constants.winRect(3),constants.winRect(4)];
+
+    % Get some the inter-frame interval, refresh rate, and the size of our window
+        constants.ifi = Screen('GetFlipInterval', window);
+        constants.hertz = FrameRate(window); % hertz = 1 / ifi
+        constants.nominalHertz = Screen('NominalFrameRate', window);
+        [constants.width, constants.height] = Screen('DisplaySize', constants.screenNumber); %in mm
+
+    % Font Configuration
+        Screen('TextFont',window, 'Arial');  % Set font to Arial
+        Screen('TextSize',window, 28);       % Set font size to 28
+        Screen('TextStyle', window, 1);      % 1 = bold font
+        Screen('TextColor', window, [0 0 0]); % Black text
+    catch
+        psychrethrow(psychlasterror);
+        windowCleanup(constants)
+    end
 end
