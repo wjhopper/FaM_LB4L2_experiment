@@ -170,9 +170,14 @@ function [window, constants] = windowSetup(constants, input)
     if any(input.debugLevel == [0 1])
     % Set the size of the PTB window based on screen size and debug level
         constants.screen_scale = [];
+        constants.indent=500;
+        constants.wrapat=60; % line length
     else
         constants.screen_scale = reshape((constants.dims' * [(1/8),(7/8)]),1,[]);
+        constants.indent=100;
+        constants.wrapat=50; % line length
     end
+    constants.spacing=35;
 
     try
         [window, constants.winRect] = Screen('OpenWindow', constants.screenNumber, (2/3)*WhiteIndex(constants.screenNumber) , round(constants.screen_scale));
