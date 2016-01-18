@@ -56,6 +56,71 @@ end
 % a file path!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
+%% Set up the experimental design %%
+% read in the design matrix and the word stimuli
+design = readtable(fullfile(constants.stimDir, 'designMatrix.csv'));
+stimlist = readtable(fullfile(constants.stimDir, 'stimlist.csv'));
+stimlist = stimlist(randperm(size(stimlist,1)),:); % randomize word order
+response = table({''}, NaN, NaN, 'VariableNames',{'response','firstPress' 'lastPress'}); % placeholder
+
+% Some experimental constants
+constants.nLists = 10;
+constants.nTargets = length(unique(design.target));
+constants.nCues = length(unique(design.cue));
+constants.CTratio = constants.nCues/constants.nTargets;
+if any(input.debugLevel == [0 1])
+    constants.cueDur = 4.0; % Length of time to study each cue-target pair
+    constants.break = 30;
+    constants.Delay=20;
+    constants.readtime=10;
+else
+    constants.cueDur = .1; % Length of time to study each cue-target pair
+    constants.break = 5;
+    constants.Delay = 5;
+    constants.readtime = .5;
+end
+
+
+% Create study lists from design matrix
+studyLists = repmat(design, constants.nLists, 1);
+studyLists.cue = stimlist.WORD(1:size(studyLists,1));
+stimlist(1:size(studyLists,1),:) = [];
+targetIndex = repmat(1:(size(studyLists)/constants.CTratio), constants.CTratio, 1);
+targetIndex = targetIndex(:);
+studyLists.target = stimlist.WORD(targetIndex);
+
+% Randomize the order of conditions within lists
+listOrders = cellfun(@randperm,repmat({20},10,1),'UniformOutput',false);
+studyLists = studyLists([listOrders{:}],:);
+% Add list identifier
+listID = repmat(1:constants.nLists, size(studyLists,1)/constants.nLists, 1);
+studyLists.list = listID(:);
+studyLists.onset = nan(size(studyLists,1),1); % add column to hold onset timestamps
+
+% Create practice lists
+pracLists = studyLists(~strcmp(studyLists.practice,'C'),:);
+assert(size(pracLists,1)== .6*size(studyLists,1))
+% Randomize the order of the practice lists
+listOrders = cellfun(@randperm,repmat({12},10,1),'UniformOutput',false);
+pracLists = pracLists([listOrders{:}],:);
+% add the columns for the reponses
+pracLists = [pracLists, repmat(response,size(pracLists,1))];
+% counterbalance the order of the study/test practices
+if mod(input.subject, 2) == 0 
+    constants.pracOrder = repmat({'S';'T'}, 5 ,1);
+else
+    constants.pracOrder = repmat({'T';'S'}, 5 ,1);
+end
+
+% Create final test phase lists
+finalLists = studyLists(studyLists.finalTest == 1,:);
+assert(size(finalLists,1)== .5*size(studyLists,1))
+% Randomize the order of the final test lists lists
+listOrders = cellfun(@randperm,repmat({10},10,1),'UniformOutput',false);
+finalLists = finalLists([listOrders{:}],:);
+% add the columns for the reponses
+finalLists = [finalLists, repmat(response,size(finalLists,1))];
+
 [window, constants] = windowSetup(constants, input);
 
 %% end of the experiment %%
