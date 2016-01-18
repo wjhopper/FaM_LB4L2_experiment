@@ -68,13 +68,15 @@ constants.nLists = 10;
 constants.nTargets = length(unique(design.target));
 constants.nCues = length(unique(design.cue));
 constants.CTratio = constants.nCues/constants.nTargets;
-if any(input.debugLevel == [0 1])
-    constants.cueDur = 4.0; % Length of time to study each cue-target pair
+if input.debugLevel == 0
+    constants.cueDur = 4; % Length of time to study each cue-target pair
+    constants.countdownSpeed = 1;
     constants.break = 30;
     constants.Delay=20;
     constants.readtime=10;
 else
-    constants.cueDur = .1; % Length of time to study each cue-target pair
+    constants.cueDur = .25; % Length of time to study each cue-target pair
+    constants.countdownSpeed = .25;
     constants.break = 5;
     constants.Delay = 5;
     constants.readtime = .5;
@@ -122,6 +124,17 @@ finalLists = [finalLists, repmat(response,size(finalLists,1))];
 
 %% Open the PTB window
 [window, constants] = windowSetup(constants, input);
+
+%% Give the instructions %%
+
+% Main Loop %%
+for i = 1:constants.nLists
+    % Study Phase
+    studyListIndex = studyLists.list == i;
+    countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);
+    studyLists.onset(studyListIndex) = study(studyLists(studyListIndex, {'cue','target'}), window, constants);
+end
+
 
 %% end of the experiment %%
 windowCleanup(constants)
