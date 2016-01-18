@@ -173,14 +173,14 @@ function [window, constants] = windowSetup(constants, input)
         constants.indent=500;
         constants.wrapat=60; % line length
     else
-        constants.screen_scale = reshape((constants.dims' * [(1/8),(7/8)]),1,[]);
+        constants.screen_scale = round(reshape((constants.dims' * [(1/8),(7/8)]),1,[]));
         constants.indent=100;
         constants.wrapat=50; % line length
     end
     constants.spacing=35;
 
     try
-        [window, constants.winRect] = Screen('OpenWindow', constants.screenNumber, (2/3)*WhiteIndex(constants.screenNumber) , round(constants.screen_scale));
+        [window, constants.winRect] = Screen('OpenWindow', constants.screenNumber, (3/4)*[255 255 255], constants.screen_scale);
     % define some landmark locations to be used throughout
         [constants.xCenter, constants.yCenter] = RectCenter(constants.winRect);
         constants.center = [constants.xCenter, constants.yCenter];
