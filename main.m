@@ -5,8 +5,8 @@ exit_stat = 1; %#ok<NASGU> assume that we exited badly if ever exit before this 
 ip = inputParser;
 %#ok<*NVREPL> dont warn about addParamValue
 addParamValue(ip,'subject', 0, @isnumeric);
-addParamValue(ip,'group', 1, @is.numeric);
-addParamValue(ip,'debugLevel',1, @isnumeric);
+addParamValue(ip,'group', 'immediate', @ischar);
+addParamValue(ip,'debugLevel',0, @isnumeric);
 parse(ip,varargin{:}); 
 input = ip.Results;
 defaults = ip.UsingDefaults;
