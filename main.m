@@ -98,12 +98,19 @@ studyLists.list = listID(:);
 studyLists.onset = nan(size(studyLists,1),1);
 % Randomize the order of conditions within lists
 studyLists = randomizeLists(studyLists);
+assert(length(unique(studyLists.cue)) == size(studyLists,1));
+assert(length(unique(studyLists.target)) == size(studyLists,1)/2);
 
 % Create practice lists
 pracLists = studyLists(~strcmp(studyLists.practice,'C'),:);
 assert(size(pracLists,1)== .6*size(studyLists,1))
 % Randomize the order of the practice lists
 pracLists = randomizeLists(pracLists);
+assert(length(unique(pracLists.cue)) == size(pracLists,1));
+assert(length(unique(pracLists.target)) == size(pracLists,1) * (2/3));
+% Duplicate the practice lists since each item gets two practice chances
+pracLists = [pracLists table(ones(size(pracLists,1),1), 'VariableNames', {'pracRound'}); ...
+    pracLists table(repmat(2,120,1), 'VariableNames', {'pracRound'})];
 % add the columns for the reponses
 pracLists = [pracLists, repmat(response,size(pracLists,1))];
 % counterbalance the order of the study/test practices
@@ -118,6 +125,8 @@ finalLists = studyLists(studyLists.finalTest == 1,:);
 assert(size(finalLists,1)== .5*size(studyLists,1))
 % Randomize the order of the final test lists lists
 finalLists = randomizeLists(finalLists);
+assert(length(unique(finalLists.cue)) == size(finalLists,1));
+assert(length(unique(finalLists.target)) == size(finalLists,1));
 % add the columns for the reponses
 finalLists = [finalLists, repmat(response,size(finalLists,1))];
 
