@@ -145,7 +145,7 @@ finalLists = [finalLists, repmat(response,size(finalLists,1))];
 
 %% Give the instructions %%
 try
-
+    giveInstructions('intro', inputHandler, window, constants, input)
 %% Main Loop %%
     % set up the keyboard
     keysOfInterest = zeros(1,256);
