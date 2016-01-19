@@ -132,22 +132,36 @@ finalLists = [finalLists, repmat(response,size(finalLists,1))];
 
 
 %% Open the PTB window
-[window, constants] = windowSetup(constants, input);
+    [window, constants] = windowSetup(constants, input);
 
 %% Give the instructions %%
+try
 
-% Main Loop %%
-for i = 1:constants.nLists
-    % Study Phase
-    studyListIndex = studyLists.list == i;
-    countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);
-    studyLists.onset(studyListIndex) = study(studyLists(studyListIndex, {'cue','target'}), window, constants);
-end
+%% Main Loop %%
+    % set up the keyboard
+    keysOfInterest = zeros(1,256);
+    keysOfInterest([65:90 KbName('BACKSPACE') KbName('RightArrow') KbName('RETURN')]) = 1;
+    KbQueueCreate([], keysOfInterest);
+
+    for i = 1:constants.nLists
+        % Study Phase
+        studyListIndex = studyLists.list == i;
+        countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);
+        studyLists.onset(studyListIndex) = study(studyLists(studyListIndex, {'cue','target'}), window, constants);
+
+        % Practice Phase
+        pracListIndex = pracLists.list == i;
+        pracLists(pracListIndex,:) = practice(pracLists(pracListIndex,:), constants.pracOrder{i}, inputHandler, window, constants);
+    end
 
 
 %% end of the experiment %%
-windowCleanup(constants)
-exit_stat=0;
+    windowCleanup(constants)
+    exit_stat=0;
+catch
+    psychrethrow(psychlasterror);
+    windowCleanup(constants)
+end
 end % end main()
 
 function overwriteCheck = makeSubjectDataChecker(directory, extension, debugLevel)
