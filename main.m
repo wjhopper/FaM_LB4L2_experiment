@@ -56,6 +56,13 @@ end
 % a file path!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
+% Define the input handler function we will use with the test() function
+if any(input.debugLevel == [0 1 2])
+    inputHandler = makeInputHandlerFcn('KbQueue');
+else
+    inputHandler = makeInputHandlerFcn('Robot');
+end
+
 %% Set up the experimental design %%
 % read in the design matrix and the word stimuli
 design = readtable(fullfile(constants.stimDir, 'designMatrix.csv'));
@@ -203,7 +210,7 @@ function [window, constants] = windowSetup(constants, input)
     constants.screenNumber = max(Screen('Screens')); % Choose a monitor to display on
     constants.res=Screen('Resolution',constants.screenNumber); % get screen resolution
     constants.dims = [constants.res.width constants.res.height];
-    if any(input.debugLevel == [0 1])
+    if any(input.debugLevel == [0 1 3])
     % Set the size of the PTB window based on screen size and debug level
         constants.screen_scale = [];
         constants.indent=500;
