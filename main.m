@@ -77,12 +77,14 @@ constants.nCues = length(unique(design.cue));
 constants.CTratio = constants.nCues/constants.nTargets;
 if input.debugLevel == 0
     constants.cueDur = 4; % Length of time to study each cue-target pair
+    constants.testDur = 8;
     constants.countdownSpeed = 1;
     constants.break = 30;
     constants.Delay=20;
     constants.readtime=10;
 else
     constants.cueDur = .25; % Length of time to study each cue-target pair
+    constants.testDur = 8;
     constants.countdownSpeed = .25;
     constants.break = 5;
     constants.Delay = 5;
