@@ -156,14 +156,13 @@ try
     for i = 1:constants.nLists
         % Study Phase
         studyListIndex = studyLists.list == i;
-        countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);
         studyLists.onset(studyListIndex) = study(studyLists(studyListIndex, {'cue','target'}), window, constants);
 
         % Practice Phase
         pracListIndex = pracLists.list == i;
         pracLists(pracListIndex,:) = practice(pracLists(pracListIndex,:), constants.pracOrder{i}, inputHandler, window, constants);
 
-        if  strcmp('immediate', ip.group)
+        if  strcmp('immediate', input.group)
             finalListIndex = finalLists.list == i;
             countdown('Final Test', 5, constants.countdownSpeed,  window, constants);
             [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
@@ -173,22 +172,22 @@ try
             data.lastPress(finalListIndex) = lastPress;         
             if i==3 || i ==6
                 % gamebreak, countdown is place holder
-                countdown('Game Break', 5, constants.gamebreak,  window, constants);
-            elseif any(i == [1 2 4 5 7 8 9])
-                % Shortbreak
-                countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);                
+                countdown('Game Break', constants.gamebreak ,constants.countdownSpeed, window, constants);
             end
         else
             if i == 5
                 % gamebreak, countdown is place holder
-                countdown('Game Break', 5, constants.gamebreak,  window, constants);
-            elseif any(i == [1 2 3 4 6 7 8 9])
-                countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);                                
+                countdown('Game Break', constants.gamebreak ,constants.countdownSpeed, window, constants)
             end
             
         end
+        
+        if i < 10
+            countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);
+        end        
     end
-    if  strcmp('delay', ip.group)
+    
+    if  strcmp('delay', input.group)
         for i = 1:10
             % Take the final test
             finalListIndex = finalLists.list == i;
