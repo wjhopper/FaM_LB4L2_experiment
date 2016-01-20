@@ -94,7 +94,11 @@ function responses = getSubjectInfo(varargin)
 
     % Parse input
     if ishghandle(fig)
-        responses = extractInput(get(fig, 'UserData'));
+        responses = struct;
+        allFields = extractInput(get(fig, 'UserData'));
+        for i = 1:length(names)
+            responses.(names{i}) = allFields.(names{i}).input;
+        end
         delete(fig);
     else
         responses = [];
