@@ -321,3 +321,18 @@ function data = randomizeLists(data)
         data(rows,:) = items(randperm(sum(rows)),:);
     end
 end
+
+function [window, constants] = gamebreak(window, constants)
+    countdown('Game Break', constants.gamebreak ,constants.countdownSpeed, window, constants);
+    if ~isfield(constants, 'figureStruct')
+        constants.figureStruct = tetris(0, 2);
+    end
+    pause(constants.gamebreak);
+    status = get(constants.figureStruct.pbt, 'string');
+    if strcmp('Pause',status)
+       startButtonCallback = get(constants.figureStruct.pbt, 'callback');
+       startButtonCallback();
+    end
+[window, constants] = windowSetup(constants);
+  
+end
