@@ -259,6 +259,10 @@ overwriteCheck = @subjectDataChecker;
 end
 
 function windowCleanup(constants)
+    if isfield(constants, 'figureStruct')
+        delete(constants.figureStruct.fig);
+    end
+    Screen('Preference', 'VisualDebugLevel', constants.VisualDebug);
     sca; % alias for screen('CloseAll')
     rmpath(constants.lib_dir,constants.root_dir);
 end
