@@ -154,12 +154,11 @@ constants.firstRun = 1;
 %% Give the instructions %%
 try
     giveInstructions('intro', inputHandler, window, constants, input)
-%% Main Loop %%
     % set up the keyboard
     keysOfInterest = zeros(1,256);
     keysOfInterest([65:90 KbName('BACKSPACE') KbName('RightArrow') KbName('RETURN')]) = 1;
     KbQueueCreate([], keysOfInterest);
-
+%% Main Loop %%
     countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);    
     for i = 1:constants.nLists
         % Study Phase
@@ -172,46 +171,44 @@ try
 
         if  strcmp('immediate', input.group)
             finalListIndex = finalLists.list == i;
-            countdown('Final Test', 5, constants.countdownSpeed,  window, constants);
+            giveInstructions('final', inputHandler, window, constants, input);
             [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
             data.onset(finalListIndex) = onset;
             data.response(finalListIndex) = response;
             data.firstPress(finalListIndex) = firstPress;
             data.lastPress(finalListIndex) = lastPress;         
-            if i==3 || i ==6
-                % gamebreak, countdown is place holder
-                countdown('Game Break', constants.gamebreak ,constants.countdownSpeed, window, constants);
+            if i== 3 || i ==6
+                [window, constants] = gamebreak(window, constants);
+                giveInstructions('resume', [], window, constants);
             end
         else
-            if i == 5
-                % gamebreak, countdown is place holder
-                countdown('Game Break', constants.gamebreak ,constants.countdownSpeed, window, constants)
+            if i == 5 || i == 10
+                [window, constants] = gamebreak(window, constants);
+                giveInstructions('resume', [], window, constants); 
             end
-            
+            if i == 10 % if its the last list
+                for j = 1:10
+                    % Take the final test
+                    finalListIndex = finalLists.list == j;
+                    giveInstructions('final', inputHandler, window, constants, input);
+                    [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
+                    data.onset(finalListIndex) = onset;
+                    data.response(finalListIndex) = response;
+                    data.firstPress(finalListIndex) = firstPress;
+                    data.lastPress(finalListIndex) = lastPress;
+                    %  shortbreak
+                    if j < 10
+                        countdown('Short Break', 5, constants.countdownSpeed,  window, constants);
+                    end
+                end
+            end            
         end
         
         if i < 10
             countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);
-        end        
+        end      
     end
     
-    if  strcmp('delay', input.group)
-        for i = 1:10
-            % Take the final test
-            finalListIndex = finalLists.list == i;
-            countdown('Final Test', 5, constants.countdownSpeed,  window, constants);
-            [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
-            data.onset(finalListIndex) = onset;
-            data.response(finalListIndex) = response;
-            data.firstPress(finalListIndex) = firstPress;
-            data.lastPress(finalListIndex) = lastPress;
-            %  shortbreak
-            if i < 10
-                countdown('Short Break', 5, constants.countdownSpeed,  window, constants);
-            end
-        end
-    end
-
 %% end of the experiment %%
     % write the data to file
     writetable(studyLists, [ constants.fName '_Study.csv' ])
