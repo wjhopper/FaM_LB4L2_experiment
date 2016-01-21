@@ -57,7 +57,7 @@ end
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
 % Define the input handler function we will use with the test() function
-if any(input.debugLevel == [0 1 2])
+if any(input.debugLevel == [0 1])
     inputHandler = makeInputHandlerFcn('KbQueue');
 else
     inputHandler = makeInputHandlerFcn('Robot');
@@ -148,7 +148,8 @@ finalLists = [finalLists, repmat(response,size(finalLists,1))];
 
 
 %% Open the PTB window
-    [window, constants] = windowSetup(constants, input);
+constants.firstRun = 1;
+[window, constants] = windowSetup(constants);
 
 %% Give the instructions %%
 try
@@ -262,25 +263,21 @@ function windowCleanup(constants)
     rmpath(constants.lib_dir,constants.root_dir);
 end
 
-function [window, constants] = windowSetup(constants, input)
+function [window, constants] = windowSetup(constants)
     PsychDefaultSetup(2);
+    HideCursor;
+    if constants.firstRun
+        constants.firstRun = 0;
+        constants.VisualDebug = Screen('Preference', 'VisualDebugLevel', 4);
+    else
+        constants.VisualDebug = Screen('Preference', 'VisualDebugLevel', 1);
+    end
     constants.screenNumber = max(Screen('Screens')); % Choose a monitor to display on
     constants.res=Screen('Resolution',constants.screenNumber); % get screen resolution
     constants.dims = [constants.res.width constants.res.height];
-    if any(input.debugLevel == [0 1 3])
-    % Set the size of the PTB window based on screen size and debug level
-        constants.screen_scale = [];
-        constants.indent=500;
-        constants.wrapat=60; % line length
-    else
-        constants.screen_scale = round(reshape((constants.dims' * [(1/8),(7/8)]),1,[]));
-        constants.indent=100;
-        constants.wrapat=50; % line length
-    end
-    constants.spacing=35;
-
+   
     try
-        [window, constants.winRect] = Screen('OpenWindow', constants.screenNumber, (3/4)*[255 255 255], constants.screen_scale);
+        [window, constants.winRect] = Screen('OpenWindow', constants.screenNumber, (4/5)*[255 255 255]);
     % define some landmark locations to be used throughout
         [constants.xCenter, constants.yCenter] = RectCenter(constants.winRect);
         constants.center = [constants.xCenter, constants.yCenter];
@@ -295,11 +292,18 @@ function [window, constants] = windowSetup(constants, input)
         constants.nominalHertz = Screen('NominalFrameRate', window);
         [constants.width, constants.height] = Screen('DisplaySize', constants.screenNumber); %in mm
 
-    % Font Configuration
+    % Font Configuration'
+        fontsize=28;
         Screen('TextFont',window, 'Arial');  % Set font to Arial
-        Screen('TextSize',window, 28);       % Set font size to 28
+        Screen('TextSize',window, fontsize);       % Set font size to 28
         Screen('TextStyle', window, 1);      % 1 = bold font
         Screen('TextColor', window, [0 0 0]); % Black text
+
+    % Text layout config
+        constants.wrapat = round(constants.res.width/fontsize, -1); % line length
+        constants.spacing=35;
+        constants.leftMargin = constants.winRect(3)/5;
+        
     catch
         psychrethrow(psychlasterror);
         windowCleanup(constants)
