@@ -107,8 +107,15 @@ studyLists.list = listID(:);
 studyLists.onset = nan(size(studyLists,1),1);
 % Randomize the order of conditions within lists
 studyLists = randomizeLists(studyLists);
+% Check to be sure all cues are unique
 assert(length(unique(studyLists.cue)) == size(studyLists,1));
+% Check to be sure targets repeat twice
 assert(length(unique(studyLists.target)) == size(studyLists,1)/2);
+% Check to be sure no targets get differnt practice types
+studyRows = strcmp('S',studyLists.practice);
+testRows = strcmp('T',studyLists.practice);
+assert(isempty(intersect(studyLists.target(testRows),studyLists.target(studyRows))));
+assert(isempty(intersect(studyLists.cue,studyLists.target)))
 
 % Create practice lists
 pracLists = studyLists(~strcmp(studyLists.practice,'C'),:);
