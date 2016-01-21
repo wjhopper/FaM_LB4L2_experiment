@@ -5,7 +5,7 @@ switch phase_name
     case 'intro'
         input = varargin{1};
         data = cell2table([{'building'; 'painting'; 'tape'; 'cloth'; 'mug';}, ...
-            {'car'; 'trash'; 'jacket'; 'nose'; 'trunk'}], 'VariableNames', {'cue','target'});
+            {'car'; 'trash'; 'jacket'; 'pine'; 'trunk'}], 'VariableNames', {'cue','target'});
         KbQueueCreate;
         KbQueueStart;
         %% Screen
@@ -18,7 +18,7 @@ switch phase_name
         %% Screen
         KbQueueStop;
         text = ['Each word pair will have the first word on the left side of the screen, and the second word on the right side.', ...
-            '\n\nThe pairs you study will be grouped into "lists" of 20 pairs, and you will study each pair one at a time'];
+            '\n\nThe pairs you study will be grouped into "lists" of 20 pairs, and you will study each pair one at a time.'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
         KbQueueStart;
         KbQueueWait;
@@ -27,7 +27,7 @@ switch phase_name
         KbQueueStop;
         text = ['The best way to remember the words in the pair is to think of an association between them.' ...
             '\n\nFor instance, if the pair is "library - oval", you could imagine an oval shaped library.' ...
-            '\n\n Or if the pair is "picture - bread", you could imagine a picture of some bread',...
+            '\n\n Or if the pair is "picture - bread", you could imagine a picture of some bread.',...
             '\n\nTry to do this for every pair you see.'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
         KbQueueStart;
@@ -35,7 +35,7 @@ switch phase_name
        
         %% Screen
         KbQueueStop;
-        text = ['Below you will see an example of what a list of word pairs will look like when you study it during the experiment', ...
+        text = ['Below you will see an example of what a list of word pairs will look like when you study it during the experiment.', ...
             '\n\nPress any key to begin'];
         DrawFormattedText(window, text,constants.leftMargin, constants.winRect(4)*.25, [],constants.wrapat,[],[],1.5);
         Screen('Flip', window);
@@ -50,8 +50,8 @@ switch phase_name
         %% Screen
         KbQueueStop;
         text = ['After you study each list of pairs, you will get a chance to practice some of the word pairs you just studied.' ...
-            '\n\nSome of the pairs will be shown to you again, and you''ll have a chance to study them again'...
-            '\n\nFor other pairs, you will take a practice test where you try to remember a word that is missing from the pair'];
+            '\n\nSome of the pairs will be shown to you again, so you''ll have another chance to study them.'...
+            '\n\nFor other pairs, you will take a practice test where you try to remember a word that is missing from the pair.'];
         drawInstructions(text, 'any key', constants.readtime*2, window, constants);
         KbQueueStart;
         KbQueueWait;
@@ -61,14 +61,14 @@ switch phase_name
         text = ['During the memory test, you will be shown a word on the left, but the word on the right will be missing.' ...
             '\n\nYour job is to remember the word that is missing from the pair, and type it in using the keyboard.'...
             '\n\nWhen you finish typing the missing word, press Enter to continue to the next pair.', ...
-            '\n\nIf you do not type anything after 8 seconds, the test will automatically continue to the next pair'];
+            '\n\nIf you do not type anything after 8 seconds, the test will automatically continue to the next pair.'];
         drawInstructions(text, 'any key', constants.readtime*2, window, constants);
         KbQueueStart;
         KbQueueWait;
         
         %% Screen
         KbQueueStop;
-        text = 'Here is an example of a memory test. Type in the word you remember being paired with the given word and press Enter';
+        text = 'Here is an example of a memory test. Type in the word you remember being paired with the given word and then press Enter.';
         keysOfInterest = zeros(1,256);
         keysOfInterest([65:90 KbName('BACKSPACE') KbName('RightArrow') KbName('RETURN')]) = 1;
         KbQueueCreate([], keysOfInterest);
@@ -101,7 +101,7 @@ switch phase_name
         
         %% Screen
         KbQueueCreate;
-        DrawFormattedText(window, 'In case you missed some, the answers were "jacket", "nose" and "trunk"', constants.leftMargin, 'center', ...
+        DrawFormattedText(window, 'In case you missed some, the answers were "jacket", "pine" and "trunk"', constants.leftMargin, 'center', ...
             [], constants.wrapat, [],[], 1.5);
         DrawFormattedText(window, 'Press any key to continue', 'center', constants.winRect(4)*.9);
         Screen('Flip',window);
@@ -146,7 +146,7 @@ switch phase_name
     case 'final'
         input = varargin{1};
         if strcmp('immediate', input.group)
-            text = 'Its time for the final test on the this list of pairs';
+            text = 'Its time for the final test on this list of pairs.';
         else
             text = 'Now it''s time for the final test. You will be test on pairs from all the lists you''ve studied in the entire experiment.';
         end
@@ -154,7 +154,7 @@ switch phase_name
         countdown(text,10, constants.countdownSpeed, window, constants)
 
     case 'resume'
-        text = 'Welcome back! Its time to resume the experiment';
+        text = 'Welcome back! Its time to resume the experiment.';
         drawInstructions(text, 'any key', constants.ifi, window, constants);
            
     case 'bye'
