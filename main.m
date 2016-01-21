@@ -212,11 +212,19 @@ try
     end
 
 %% end of the experiment %%
+    % write the data to file
+    writetable(studyLists, [ constants.fName '_Study.csv' ])
+    testRows = strcmp('T', pracLists.practice);
+    writetable(pracLists(testRows,:), [ constants.fName '_StudyPractice.csv' ])
+    writetable(pracLists(~testRows,:),  [ constants.fName '_TestPractice.csv' ])
+    writetable(finalLists, [ constants.fName '_Final.csv' ])
+    
+    giveInstructions('bye', [], window, constants);
     windowCleanup(constants)
     exit_stat=0;
 catch
-    psychrethrow(psychlasterror);
     windowCleanup(constants)
+    psychrethrow(psychlasterror);    
 end
 end % end main()
 
