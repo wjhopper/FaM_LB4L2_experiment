@@ -218,10 +218,10 @@ try
     writetable(finalLists, [ constants.fName '_Final.csv' ])
     
     giveInstructions('bye', [], window, constants);
-    windowCleanup(constants)
+    cleanup(constants)
     exit_stat=0;
 catch
-    windowCleanup(constants)
+    cleanup(constants)
     psychrethrow(psychlasterror);    
 end
 end % end main()
@@ -255,7 +255,7 @@ function overwriteCheck = makeSubjectDataChecker(directory, extension, debugLeve
 overwriteCheck = @subjectDataChecker;
 end
 
-function windowCleanup(constants)
+function cleanup(constants)
     if isfield(constants, 'figureStruct')
         delete(constants.figureStruct.fig);
     end
@@ -307,7 +307,7 @@ function [window, constants] = windowSetup(constants)
         
     catch
         psychrethrow(psychlasterror);
-        windowCleanup(constants)
+        cleanup(constants)
     end
 end
 
