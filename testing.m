@@ -1,9 +1,10 @@
 function [onset, response, firstPress, lastPress] = testing(data, inputHandler, window, constants)
 
-onset = data.onset;
-response = data.response;
-firstPress = data.firstPress;
-lastPress = data.lastPress;
+oldsize = Screen('TextSize', window, 40);
+onset = nan(size(data,1),1);
+response = cell(size(data,1),1);
+firstPress = nan(size(data,1),1);
+lastPress = nan(size(data,1),1);
 Screen('TextSize', window, 40);
 KbQueueStart;
 for j = 1:size(data,1)
