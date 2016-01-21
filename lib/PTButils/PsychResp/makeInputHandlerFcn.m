@@ -18,18 +18,25 @@ end
             [~, ind] = sort(firstPress(firstPress~=0));
             keys = keys(ind);
             for i = 1:numel(keys)
-                if (keys(i) == 13 && ~isempty(string)) || keys(i) == 39 %13 is return, 39 is right arrow 
-                    advance = 1;                   
-                elseif keys(i) == 8
-                    if ~isempty(string) % 'BACKSPACE
-                        string = string(1:end-1);       
-                        rt = rt(1:end-1);
+                switch keys(i)
+                    case 13 %13 is return
+                        if ~isempty(string)
+                            advance = 1;
+                        end
+                    case 39  %39 is right arrow
+                        if ~isempty(string)
+                            advance = 1;
+                        end
+                    case 8 %8 is BACKSPACE
+                        if ~isempty(string)
+                            string = string(1:end-1);       
+                            rt = rt(1:end-1);
+                            redraw = 1;
+                        end
+                    otherwise 
+                        string = [string, KbName(keys(i))]; %#ok<AGROW>
+                        rt = [rt firstPress(keys(i))]; %#ok<AGROW>
                         redraw = 1;
-                    end
-                else
-                    string = [string, KbName(keys(i))]; %#ok<AGROW>
-                    rt = [rt firstPress(keys(i))]; %#ok<AGROW>
-                    redraw = 1;
                 end
             end
         end
