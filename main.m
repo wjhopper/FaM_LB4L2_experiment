@@ -52,16 +52,9 @@ else
     assert(validSubNum, msg)
 end
 
-% now that we have all the input and its passed validation, we can have
-% a file path!
+% now that we have all the input and its passed validation, we can have a file path!
+% Remember that this is a file path WITHOUT AN EXTENSION!!!!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
-
-% Define the input handler function we will use with the test() function
-if any(input.debugLevel == [0 1])
-    inputHandler = makeInputHandlerFcn('KbQueue');
-else
-    inputHandler = makeInputHandlerFcn('Robot');
-end
 
 %% Set up the experimental design %%
 % read in the design matrix and the word stimuli
@@ -75,22 +68,40 @@ constants.nLists = 10;
 constants.nTargets = length(unique(design.target));
 constants.nCues = length(unique(design.cue));
 constants.CTratio = constants.nCues/constants.nTargets;
-if input.debugLevel == 0
+constants.practiceCountdown = 3;
+constants.finalTestCountdown = 5;
+constants.finalTestBreakCountdown = 10;
+constants.studyNewListCountdown = 5;
+constants.gamebreakCountdown = 5;
+
+%% Debug Levels
+% Level 0: normal experiment
+if input.debugLevel >= 0
     constants.cueDur = 4; % Length of time to study each cue-target pair
     constants.testDur = 8;
-    constants.countdownSpeed = 1;
-    constants.gamebreak = 30;
-    constants.Delay=20;
+    constants.gamebreak = 300;
     constants.readtime=10;
-else
+    constants.countdownSpeed = 1;
+    inputHandler = makeInputHandlerFcn('KbQueue');
+end
+
+% Level 1: Fast Stim durations, readtimes & breaks
+if input.debugLevel >= 1
     constants.cueDur = .25; % Length of time to study each cue-target pair
-    constants.testDur = 8;
-    constants.countdownSpeed = .25;
-    constants.gamebreak = 5;
-    constants.Delay = 5;
+    constants.testDur = 3;
+    constants.gamebreak = 10;
     constants.readtime = .5;
 end
-constants.gamebreakIntro = 5;
+
+% Level 2: Fast countdowns
+if input.debugLevel >= 2
+    constants.countdownSpeed = .25;
+end
+
+% Level 3: Good robot input
+if input.debugLevel >= 3
+    inputHandler = makeInputHandlerFcn('Robot');
+end
 
 % Create study lists from design matrix
 studyLists = repmat(design, constants.nLists, 1);
@@ -159,7 +170,8 @@ try
     keysOfInterest([65:90 KbName('BACKSPACE') KbName('RightArrow') KbName('RETURN')]) = 1;
     KbQueueCreate([], keysOfInterest);
 %% Main Loop %%
-    countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);    
+    countdown('It''s time to study a new list of pairs', constants.studyNewListCountdown, ...
+        constants.countdownSpeed,  window, constants);    
     for i = 1:constants.nLists
         % Study Phase
         studyListIndex = studyLists.list == i;
@@ -180,7 +192,6 @@ try
             if i== 3 || i ==6
                 [window, constants] = gamebreak(window, constants);
                 giveInstructions('resume', [], window, constants);
-                sca;
             end
         else
             if i == 5 || i == 10
@@ -199,14 +210,16 @@ try
                     data.lastPress(finalListIndex) = lastPress;
                     %  shortbreak
                     if j < 10
-                        countdown('Short Break', 5, constants.countdownSpeed,  window, constants);
+                        countdown('Take a short break and the test will resume in', constants.finalTestBreakCountdown,...
+                            constants.countdownSpeed,  window, constants);
                     end
                 end
             end            
         end
         
         if i < 10
-            countdown('It''s time to study a new list of pairs', 5, constants.countdownSpeed,  window, constants);
+            countdown('It''s time to study a new list of pairs', constants.studyNewListCountdown, ...
+                constants.countdownSpeed,  window, constants);
         end      
     end
     
@@ -322,7 +335,7 @@ end
 
 function [window, constants] = gamebreak(window, constants)
     countdown('It''s time for a break! Play some Tetris and relax.\n\nIf you dont know how to play, click the ''Help'' button on the Tetris window', ...
-        constants.gamebreakIntro ,constants.countdownSpeed, window, constants);
+        constants.gamebreakCountdown ,constants.countdownSpeed, window, constants);
     sca; % this is good, don't remove this!!
     if ~isfield(constants, 'figureStruct')
         constants.figureStruct = tetris(0, 2);

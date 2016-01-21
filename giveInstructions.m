@@ -151,7 +151,7 @@ switch phase_name
             text = 'Now it''s time for the final test. You will be test on pairs from all the lists you''ve studied in the entire experiment.';
         end
         text = [text '\n\nThe final test will begin in'];
-        countdown(text,10, constants.countdownSpeed, window, constants)
+        countdown(text, constants.finalTestCountdown, constants.countdownSpeed, window, constants)
 
     case 'resume'
         text = 'Welcome back! Its time to resume the experiment.';
