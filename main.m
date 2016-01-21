@@ -90,7 +90,7 @@ else
     constants.Delay = 5;
     constants.readtime = .5;
 end
-
+constants.gamebreakIntro = 5;
 
 % Create study lists from design matrix
 studyLists = repmat(design, constants.nLists, 1);
@@ -180,6 +180,7 @@ try
             if i== 3 || i ==6
                 [window, constants] = gamebreak(window, constants);
                 giveInstructions('resume', [], window, constants);
+                sca;
             end
         else
             if i == 5 || i == 10
@@ -320,7 +321,9 @@ function data = randomizeLists(data)
 end
 
 function [window, constants] = gamebreak(window, constants)
-    countdown('Game Break', constants.gamebreak ,constants.countdownSpeed, window, constants);
+    countdown('It''s time for a break! Play some Tetris and relax.\n\nIf you dont know how to play, click the ''Help'' button on the Tetris window', ...
+        constants.gamebreakIntro ,constants.countdownSpeed, window, constants);
+    sca; % this is good, don't remove this!!
     if ~isfield(constants, 'figureStruct')
         constants.figureStruct = tetris(0, 2);
     end
