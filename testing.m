@@ -6,6 +6,7 @@ response = cell(size(data,1),1);
 firstPress = nan(size(data,1),1);
 lastPress = nan(size(data,1),1);
 duration = constants.testDur;
+KbQueueFlush;
 KbQueueStart;
 
 for j = 1:size(data,1)
