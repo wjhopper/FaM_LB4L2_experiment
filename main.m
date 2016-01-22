@@ -56,6 +56,9 @@ end
 % Remember that this is a file path WITHOUT AN EXTENSION!!!!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
+%% Ask for demographics
+demographics(constants.savePath);
+    
 %% Set up the experimental design %%
 % read in the design matrix and the word stimuli
 design = readtable(fullfile(constants.stimDir, 'designMatrix.csv'));
