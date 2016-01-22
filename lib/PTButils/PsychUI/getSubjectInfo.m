@@ -60,21 +60,16 @@ function responses = getSubjectInfo(varargin)
         % to true
         if strcmp(types{i}, 'textinput')
             fields.(names{i}).handle = uicontrol(fig, props, 'Style', 'edit', 'String', fields.(names{i}).values);
-            if fields.(names{i}).validationFcn(fields.(names{i}).values)
-                set(fields.(names{i}).handle, 'UserData',struct('validInput', true));
-            end            
+            isvalid = fields.(names{i}).validationFcn(fields.(names{i}).values);
         elseif strcmp(types{i}, 'dropdown')
             fields.(names{i}).handle = uicontrol(fig, props, 'Style', 'popupmenu', 'String', fields.(names{i}).values, 'Value', 1);
-            if fields.(names{i}).validationFcn(getPopupString(fields.(names{i}).handle))
-                set(fields.(names{i}).handle, 'UserData',struct('validInput', true));
-            end           
+            isvalid = fields.(names{i}).validationFcn(getPopupString(fields.(names{i}).handle));
         else % The only alternative is checkbox   
             fields.(names{i}).handle = uicontrol(fig, props, 'Style', 'checkbox', 'String', fields.(names{i}).title, ...
                 'Val', fields.(names{i}).values, 'Position',[margin, height - offset - margin - check_size, width-2*margin, check_size]);
-            if fields.(names{i}).validationFcn(fields.(names{i}).values)
-                set(fields.(names{i}).handle, 'UserData',struct('validInput', true));
-            end          
+            isvalid = fields.(names{i}).validationFcn(fields.(names{i}).values);
         end
+        set(fields.(names{i}).handle, 'UserData', isvalid);
         offset = offset + (strcmp(types{i},'checkbox')*check_size) + (~strcmp(types{i},'checkbox')*text_size) + ...
             (~strcmp(types{i},'checkbox')*title_size);
     end
