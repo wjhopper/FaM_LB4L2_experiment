@@ -166,9 +166,7 @@ constants.firstRun = 1;
 try
     giveInstructions('intro', inputHandler, window, constants, input)
     % set up the keyboard
-    keysOfInterest = zeros(1,256);
-    keysOfInterest([65:90 KbName('BACKSPACE') KbName('RightArrow') KbName('RETURN')]) = 1;
-    KbQueueCreate([], keysOfInterest);
+    setupTestKBQueue;
 %% Main Loop %%
     countdown('It''s time to study a new list of pairs', constants.studyNewListCountdown, ...
         constants.countdownSpeed,  window, constants);    
@@ -192,11 +190,13 @@ try
             if i== 3 || i ==6
                 [window, constants] = gamebreak(window, constants);
                 giveInstructions('resume', [], window, constants);
+                setupTestKBQueue;
             end
         else
             if i == 5 || i == 10
                 [window, constants] = gamebreak(window, constants);
                 giveInstructions('resume', [], window, constants); 
+                setupTestKBQueue;
             end
             if i == 10 % if its the last list
                 for j = 1:10
@@ -333,6 +333,11 @@ function data = randomizeLists(data)
     end
 end
 
+function setupTestKBQueue
+    keysOfInterest = zeros(1,256);
+    keysOfInterest([65:90 KbName('BACKSPACE') KbName('RightArrow') KbName('RETURN')]) = 1;
+    KbQueueCreate([], keysOfInterest);
+end
 function [window, constants] = gamebreak(window, constants)
     countdown('It''s time for a break! Play some Tetris and relax.\n\nIf you dont know how to play, click the ''Help'' button on the Tetris window', ...
         constants.gamebreakCountdown ,constants.countdownSpeed, window, constants);
