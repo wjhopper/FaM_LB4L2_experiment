@@ -111,7 +111,7 @@ switch phase_name
         %% Screen
         KbQueueStop;
         if strcmp('immediate', input.group)
-            text = 'After you finish the practice phase for each lists, you will take a final memory test on the pairs from that list.';
+            text = 'After you finish the practice phase for each list, you will take a final memory test on the pairs from that list.';
         else
             text = 'After you study and practicing every lists, you will take a final memory test on pairs from all the lists.';
         end
@@ -124,7 +124,7 @@ switch phase_name
         KbQueueStop;
         text = ['You will get a 5 minute break in between some of the lists.',...
             '\n\nDuring these breaks, you can relax by playing a game of Tetris which will popup on the screen.', ...
-            '\n\nWhen its time to resume the experiment, your game will pause and the experiment will pick up where you left off'];
+            '\n\nWhen the break is finished, your game will pause and the experiment will resume where you left off'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
         KbQueueStart;
         KbQueueWait;
@@ -154,8 +154,12 @@ switch phase_name
         countdown(text, constants.finalTestCountdown, constants.countdownSpeed, window, constants)
 
     case 'resume'
+        KbQueueCreate;
         text = 'Welcome back! Its time to resume the experiment.';
         drawInstructions(text, 'any key', constants.ifi, window, constants);
+        KbQueueStart;
+        KbQueueWait;
+        KbQueueRelease;
            
     case 'bye'
         text = ['The experiment is over, thanks for participating!', ...
