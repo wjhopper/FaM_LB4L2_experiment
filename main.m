@@ -270,17 +270,17 @@ overwriteCheck = @subjectDataChecker;
 end
 
 function cleanup(constants)
+    sca; % alias for screen('CloseAll')
     if isfield(constants, 'figureStruct')
         delete(constants.figureStruct.fig);
     end
+    KbQueueRelease;
     Screen('Preference', 'VisualDebugLevel', constants.VisualDebug);
-    sca; % alias for screen('CloseAll')
     rmpath(constants.lib_dir,constants.root_dir);
 end
 
 function [window, constants] = windowSetup(constants)
-    PsychDefaultSetup(2);
-    HideCursor;
+
     if constants.firstRun
         constants.firstRun = 0;
         constants.VisualDebug = Screen('Preference', 'VisualDebugLevel', 4);
@@ -292,6 +292,8 @@ function [window, constants] = windowSetup(constants)
     constants.dims = [constants.res.width constants.res.height];
    
     try
+        PsychDefaultSetup(2);
+        HideCursor;
         [window, constants.winRect] = Screen('OpenWindow', constants.screenNumber, (4/5)*[255 255 255]);
     % define some landmark locations to be used throughout
         [constants.xCenter, constants.yCenter] = RectCenter(constants.winRect);
