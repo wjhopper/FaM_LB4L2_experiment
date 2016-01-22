@@ -38,7 +38,7 @@ subjectValidator = makeSubjectDataChecker(constants.savePath, '.csv', input.debu
 expose = {'subject', 'group'}; % list of arguments to be exposed to the gui
 if any(ismember(defaults, expose))
 % call gui for input
-    guiInput = getSubjectInfo('subject', struct('title', 'Subject Number', 'type', 'textinput', 'validationFcn', subjectValidator), ...
+    guiInput = getSubjectInfo('subject', struct('title', 'Subject Number', 'values', '', 'type', 'textinput', 'validationFcn', subjectValidator), ...
         'group', struct('title' ,'Group', 'type', 'dropdown', 'values', {{'immediate','delay'}}));
     if isempty(guiInput)
         exit_stat = 1;
@@ -248,18 +248,21 @@ function overwriteCheck = makeSubjectDataChecker(directory, extension, debugLeve
     function [valid, msg] = subjectDataChecker(value, ~)
         % the actual validation logic
         
-        subnum = str2double(value);        
-        if (~isnumeric(subnum) || isnan(subnum)) && ~isnumeric(value);
+        if ischar(value)
+            subnum = str2double(value);
+        else
+            subnum = value;
+        end
+        if  isnan(subnum) || (subnum <= 0  && debugLevel <= 2);
             valid = false;
             msg = 'Subject Number must be greater than 0';
             return
         end
         
-        filePathGlobUpper = fullfile(directory, ['*Subject', value, '*', extension]);
-        filePathGlobLower = fullfile(directory, ['*subject', value, '*', extension]);
-        if ~isempty(dir(filePathGlobUpper)) || ~isempty(dir(filePathGlobLower)) && debugLevel <= 2
+        filePathGlob = fullfile(directory, ['*Subject_', num2str(subnum), '*', extension]);
+        if ~isempty(dir(filePathGlob)) && debugLevel <= 2
             valid= false;
-            msg = strjoin({'Data file for Subject',  value, 'already exists!'}, ' ');                   
+            msg = strjoin({'Data file for Subject',  num2str(subnum), 'already exists!'}, ' ');                   
         else
             valid= true;
             msg = 'ok';
