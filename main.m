@@ -47,7 +47,7 @@ if any(ismember(defaults, expose))
        input.subject = str2double(input.subject); 
     end
 else
-    [validSubNum, msg] = subjectValidator(input.subject, '.csv', input.debugLevel);
+    [validSubNum, msg] = subjectValidator(input.subject);
     assert(validSubNum, msg)
 end
 
