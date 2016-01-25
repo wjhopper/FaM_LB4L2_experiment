@@ -5,7 +5,7 @@ exit_stat = 1; % assume that we exited badly if ever exit before this gets reass
 ip = inputParser;
 %#ok<*NVREPL> dont warn about addParamValue
 addParamValue(ip,'subject', 0, @isnumeric);
-addParamValue(ip,'group', 'immediate', @ischar);
+addParamValue(ip,'group', [], @ischar);
 addParamValue(ip,'debugLevel',0, @isnumeric);
 parse(ip,varargin{:}); 
 input = ip.Results;
@@ -35,11 +35,10 @@ subjectValidator = makeSubjectDataChecker(constants.savePath, '.csv', input.debu
 
 %% -------- GUI input option ----------------------------------------------------
 % If any input was not given, ask for it!
-expose = {'subject', 'group'}; % list of arguments to be exposed to the gui
+expose = {'subject'}; % list of arguments to be exposed to the gui
 if any(ismember(defaults, expose))
 % call gui for input
-    guiInput = getSubjectInfo('subject', struct('title', 'Subject Number', 'values', '', 'type', 'textinput', 'validationFcn', subjectValidator), ...
-        'group', struct('title' ,'Group', 'type', 'dropdown', 'values', {{'immediate','delay'}}));
+    guiInput = getSubjectInfo('subject', struct('title', 'Subject Number', 'values', '', 'type', 'textinput', 'validationFcn', subjectValidator));
     if isempty(guiInput)
         exit_stat = 1;
         return
@@ -56,8 +55,16 @@ end
 % Remember that this is a file path WITHOUT AN EXTENSION!!!!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
-%% Ask for demographics
-demographics(constants.savePath);
+%% Ask for demographics if we're not debugging heavily
+if input.debugLevel <= 2;
+    demographics(constants.savePath);
+end
+
+%% Determine Group, if not specified on command line
+if ismember('group', ip.UsingDefaults)
+    groups = {'immediate','delay'};
+    input.group = groups{randi(2,1,1)};
+end
     
 %% Set up the experimental design %%
 % read in the design matrix and the word stimuli
