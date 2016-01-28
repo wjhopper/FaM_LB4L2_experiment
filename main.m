@@ -35,15 +35,14 @@ subjectValidator = makeSubjectDataChecker(constants.savePath, '.csv', input.debu
 
 %% -------- GUI input option ----------------------------------------------------
 % If any input was not given, ask for it!
-expose = {'subject'}; % list of arguments to be exposed to the gui
-if any(ismember(defaults, expose))
+if any(ismember(defaults, 'subject')) % only subject should be allowed to be set by GUI
 % call gui for input
     guiInput = getSubjectInfo('subject', struct('title', 'Subject Number', 'values', '', 'type', 'textinput', 'validationFcn', subjectValidator));
     if isempty(guiInput)
         exit_stat = 1;
         return
     else
-       input = filterStructs(guiInput, input);
+       input = filterStructs(guiInput, input); % Overwrite any fields in the CLI input that are also given via GUI input
        input.subject = str2double(input.subject); 
     end
 else
@@ -55,6 +54,7 @@ end
 % Remember that this is a file path WITHOUT AN EXTENSION!!!!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
+clear guiInput msg validSubNum subjectValidator
 %% Ask for demographics if we're not debugging heavily
 if input.debugLevel <= 2;
     demographics(constants.savePath);
@@ -65,24 +65,7 @@ if ismember('group', ip.UsingDefaults)
     groups = {'immediate','delay'};
     input.group = groups{randi(2,1,1)};
 end
-    
-%% Set up the experimental design %%
-% read in the design matrix and the word stimuli
-design = readtable(fullfile(constants.stimDir, 'designMatrix.csv'));
-stimlist = readtable(fullfile(constants.stimDir, 'stimlist.csv'));
-stimlist = stimlist(randperm(size(stimlist,1)),:); % randomize word order
-response = table({''}, NaN, NaN, 'VariableNames',{'response','firstPress' 'lastPress'}); % placeholder
-
-% Some experimental constants
-constants.nLists = 10;
-constants.nTargets = length(unique(design.target));
-constants.nCues = length(unique(design.cue));
-constants.CTratio = constants.nCues/constants.nTargets;
-constants.practiceCountdown = 3;
-constants.finalTestCountdown = 5;
-constants.finalTestBreakCountdown = 10;
-constants.studyNewListCountdown = 5;
-constants.gamebreakCountdown = 5;
+clear ip defaults groups varargin
 
 %% Debug Levels
 % Level 0: normal experiment
@@ -112,6 +95,30 @@ end
 if input.debugLevel >= 3
     inputHandler = makeInputHandlerFcn('Robot');
 end
+    
+%% Set up the experimental design %%
+% Some experimental constants
+constants.nLists = 10;
+constants.nTargets = 10;
+constants.nCues = 20;
+constants.CTratio = constants.nCues/constants.nTargets;
+constants.nTrials = constants.nCues*constants.nLists;
+constants.practiceCountdown = 3;
+constants.finalTestCountdown = 5;
+constants.finalTestBreakCountdown = 10;
+constants.studyNewListCountdown = 5;
+constants.gamebreakCountdown = 5;
+    
+%% Set up the experimental design %%
+% read in the design matrix and the word stimuli
+design = readtable(fullfile(constants.stimDir, 'designMatrix.csv'));
+assert(constants.nTargets == length(unique(design.target)), ...
+    'number of targets per list declared does not match number of targets in design matrix');
+assert(constants.nCues == length(unique(design.cue)), ...
+    'number of cues per list declared does not match number of cues in design matrix');
+stimlist = readtable(fullfile(constants.stimDir, 'stimlist.csv'));
+stimlist = stimlist(randperm(size(stimlist,1)),:); % randomize word order
+response = table({''}, NaN, NaN, 'VariableNames',{'response','firstPress' 'lastPress'}); % placeholder
 
 % Create study lists from design matrix
 studyLists = repmat(design, constants.nLists, 1);
@@ -131,25 +138,33 @@ studyLists = randomizeLists(studyLists);
 % Check to be sure all cues are unique
 assert(length(unique(studyLists.cue)) == size(studyLists,1));
 % Check to be sure targets repeat twice
-assert(length(unique(studyLists.target)) == size(studyLists,1)/2);
-% Check to be sure no targets get differnt practice types
+assert(length(unique(studyLists.target)) == constants.nTargets*constants.nLists);
+% Check to be sure no targets get different practice types
 studyRows = strcmp('S',studyLists.practice);
 testRows = strcmp('T',studyLists.practice);
-assert(isempty(intersect(studyLists.target(testRows),studyLists.target(studyRows))));
-assert(isempty(intersect(studyLists.cue,studyLists.target)))
+assert(isempty(intersect(studyLists.target(testRows),studyLists.target(studyRows))), ...
+    'Target word set to recieve both study and test practice, which should be structually impossible for this design');
+% Check that no word is used as both cue and target
+assert(isempty(intersect(studyLists.cue,studyLists.target)), ...
+    'Word used as both cue and target, which should be structually impossible for this design')
+
+clear stimlist design listID rows T_O testRows studyRows i cond_orders
 
 % Create practice lists
 pracLists = studyLists(~strcmp(studyLists.practice,'C'),:);
-assert(size(pracLists,1)== .6*size(studyLists,1))
 % Randomize the order of the practice lists
 pracLists = randomizeLists(pracLists);
-assert(length(unique(pracLists.cue)) == size(pracLists,1));
-assert(length(unique(pracLists.target)) == size(pracLists,1) * (2/3));
+% Check that subsetting the study list still leaves us with all unique cues
+assert(length(unique(pracLists.cue)) == size(pracLists,1), 'Not all cues used in pratice are unique');
+% Check that no target is practiced twice
+assert(length(unique(pracLists.target)) == size(pracLists,1), 'Not all targets praticed are unique');
+% Only 2 targets from each condition should be practiced (minus the control condition which gets nothing)
+assert(size(pracLists,1)== .4*size(studyLists,1), 'Too many pairs set to receive practice')
+
 % Duplicate the practice lists since each item gets two practice chances
-pracLists = [pracLists table(ones(size(pracLists,1),1), 'VariableNames', {'pracRound'}); ...
-    pracLists table(repmat(2,120,1), 'VariableNames', {'pracRound'})];
+pracLists = [repmat(pracLists, 2),  table([ones(size(pracLists,1),1) ; repmat(2,size(pracLists,1),1)], 'VariableNames', {'pracRound'})];
 % add the columns for the reponses
-pracLists = [pracLists, repmat(response,size(pracLists,1))];
+pracLists = [pracLists, repmat(response,size(pracLists,1),1)];
 % counterbalance the order of the study/test practices
 if mod(input.subject, 2) == 0 
     constants.pracOrder = repmat({'S';'T'}, 5 ,1);
@@ -165,8 +180,8 @@ finalLists = randomizeLists(finalLists);
 assert(length(unique(finalLists.cue)) == size(finalLists,1));
 assert(length(unique(finalLists.target)) == size(finalLists,1));
 % add the columns for the reponses
-finalLists = [finalLists, repmat(response,size(finalLists,1))];
-
+finalLists = [finalLists, repmat(response,size(finalLists,1),1)];
+clear response
 
 %% Open the PTB window
 constants.firstRun = 1;
