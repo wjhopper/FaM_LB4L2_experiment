@@ -108,8 +108,7 @@ constants.finalTestCountdown = 5;
 constants.finalTestBreakCountdown = 10;
 constants.studyNewListCountdown = 5;
 constants.gamebreakCountdown = 5;
-    
-%% Set up the experimental design %%
+
 % read in the design matrix and the word stimuli
 design = readtable(fullfile(constants.stimDir, 'designMatrix.csv'));
 assert(constants.nTargets == length(unique(design.target)), ...
@@ -120,22 +119,39 @@ stimlist = readtable(fullfile(constants.stimDir, 'stimlist.csv'));
 stimlist = stimlist(randperm(size(stimlist,1)),:); % randomize word order
 response = table({''}, NaN, NaN, 'VariableNames',{'response','firstPress' 'lastPress'}); % placeholder
 
-% Create study lists from design matrix
-studyLists = repmat(design, constants.nLists, 1);
-studyLists.cue = stimlist.WORD(1:size(studyLists,1));
-stimlist(1:size(studyLists,1),:) = [];
-targetIndex = repmat(1:(size(studyLists)/constants.CTratio), constants.CTratio, 1);
-targetIndex = targetIndex(:);
-studyLists.target = stimlist.WORD(targetIndex);
+%% Create study lists using design matrix and experimental constants
+% Generate list ID variable
+listID = repmat(1:constants.nLists, constants.nTrials/constants.nLists, 1);
+% Create the study list table
+studyLists = [table(repmat(input.subject, constants.nTrials, 1), 'VariableNames', {'subject'}), ... % subject column
+    table(listID(:),'VariableNames', {'list'}), ... % list column
+    table(stimlist.WORD(1:constants.nTrials), 'VariableNames', {'cue'}), ... % Cue words
+    cell2table(cell(200, 2), 'VariableNames', {'target', 'practice'}), ... % target &  practice columns, (blank for now)
+    array2table(nan(constants.nTrials,2), 'VariableNames', {'test', 'onset'})]; % test and onset column (missing for now
+% remove the used up words from the pool
+stimlist(1:constants.nTrials, :) = [];
 
-% Add list identifier
-listID = repmat(1:constants.nLists, size(studyLists,1)/constants.nLists, 1);
-studyLists.list = listID(:);
-% add column to hold onset timestamps
-studyLists.onset = nan(size(studyLists,1),1);
-% Randomize the order of conditions within lists
-studyLists = randomizeLists(studyLists);
-% Check to be sure all cues are unique
+% Insert target words: we need to repeat targets twice in each list,
+% but we want the repetition to occur after each unique target
+% has been presented at least once (i.e. lag between each occurance is 10).
+% This is all for randomizing the order of conditions while meeting this
+% constraint.
+for i = 1:constants.nLists 
+    % find the rows for the current list in the study list table
+    rows = studyLists.list == i;
+    % random order of each unique target for the list
+    T_O = randperm(constants.nTargets); % T_O = "target order"
+    % insert target words into the study list table
+    studyLists.target(rows) = stimlist.WORD([ T_O, T_O ]);
+    % remove used up words from the pool
+    stimlist(1:constants.nTargets, :) = [];
+    % Sort the condition mapping columns by random target order
+    cond_orders = [design(T_O, {'practice', 'test'}) ;  design(T_O + max(T_O), {'practice', 'test'})];
+    % insert the sorted condition mapping columns into the study list table
+    studyLists(rows, {'practice', 'test'}) = cond_orders;
+end
+%% Checking constraints the study lists 
+% Check that all cues are unique
 assert(length(unique(studyLists.cue)) == size(studyLists,1));
 % Check to be sure targets repeat twice
 assert(length(unique(studyLists.target)) == constants.nTargets*constants.nLists);
@@ -150,10 +166,9 @@ assert(isempty(intersect(studyLists.cue,studyLists.target)), ...
 
 clear stimlist design listID rows T_O testRows studyRows i cond_orders
 
-% Create practice lists
-pracLists = studyLists(~strcmp(studyLists.practice,'C'),:);
-% Randomize the order of the practice lists
-pracLists = randomizeLists(pracLists);
+%% Create practice lists
+% Practiced pairs are all those with an entry in the 'practice' column
+pracLists = studyLists(~strcmp('', studyLists.practice),:);
 % Check that subsetting the study list still leaves us with all unique cues
 assert(length(unique(pracLists.cue)) == size(pracLists,1), 'Not all cues used in pratice are unique');
 % Check that no target is practiced twice
@@ -172,11 +187,9 @@ else
     constants.pracOrder = repmat({'T';'S'}, 5 ,1);
 end
 
-% Create final test phase lists
-finalLists = studyLists(studyLists.finalTest == 1,:);
+%% Create final test lists
+finalLists = studyLists(studyLists.test == 1,:);
 assert(size(finalLists,1)== .5*size(studyLists,1))
-% Randomize the order of the final test lists lists
-finalLists = randomizeLists(finalLists);
 assert(length(unique(finalLists.cue)) == size(finalLists,1));
 assert(length(unique(finalLists.target)) == size(finalLists,1));
 % add the columns for the reponses
@@ -352,14 +365,6 @@ function [window, constants] = windowSetup(constants)
     catch
         psychrethrow(psychlasterror);
         cleanup(constants)
-    end
-end
-
-function data = randomizeLists(data)
-    for i = unique(data.list)'
-        rows = data.list == i;
-        items = data(rows,:);
-        data(rows,:) = items(randperm(sum(rows)),:);
     end
 end
 
