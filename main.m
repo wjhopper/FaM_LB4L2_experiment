@@ -75,25 +75,36 @@ if input.debugLevel >= 0
     constants.gamebreak = 300;
     constants.readtime=10;
     constants.countdownSpeed = 1;
+    constants.ISI = .5;    
     inputHandler = makeInputHandlerFcn('KbQueue');
 end
 
 % Level 1: Fast Stim durations, readtimes & breaks
 if input.debugLevel >= 1
-    constants.cueDur = .25; % Length of time to study each cue-target pair
+    hertz = Screen('NominalFrameRate', max(Screen('Screens'))); % hertz = 1/ifi
+    constants.cueDur = (30/hertz); % pairs on screen for the length of 30 flip intercals 
     constants.testDur = 3;
     constants.gamebreak = 10;
-    constants.readtime = .5;
+    constants.readtime = constants.cueDur;
 end
 
-% Level 2: Fast countdowns
+% Level 2: Fast countdowns & Game
 if input.debugLevel >= 2
-    constants.countdownSpeed = .25;
+    constants.countdownSpeed = constants.cueDur;
+    constants.gamebreak = 5;
 end
 
 % Level 3: Good robot input
 if input.debugLevel >= 3
     inputHandler = makeInputHandlerFcn('Robot');
+end
+
+% Level 4: Extreme debugging, useful for knowing if flips are timed ok.
+if input.debugLevel >= 4
+    constants.cueDur = (1/hertz); % pairs on screen for only 1 flip
+    constants.countdownSpeed = constants.cueDur;
+    constants.readtime = constants.cueDur;
+    constants.ISI = .5;        
 end
     
 %% Set up the experimental design %%
@@ -190,6 +201,8 @@ constants.firstRun = 1;
 %% Give the instructions %%
 try
     giveInstructions('intro', input, inputHandler, window, constants)
+    sca;
+    return
     % set up the keyboard
     setupTestKBQueue;
 %% Main Loop %%
