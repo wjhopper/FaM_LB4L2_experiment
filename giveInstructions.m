@@ -1,19 +1,23 @@
-function []= giveInstructions(phase_name, inputHandler, window, constants, varargin)
+function []= giveInstructions(phase_name, input, inputHandler, window, constants)
 
 % oldTextSize=Screen('TextSize', window, 28);
+if input.debugLevel >= 3
+    rob = java.awt.Robot;
+end
+
 switch phase_name
     case 'intro'
-        input = varargin{1};
         data = cell2table([{'building'; 'painting'; 'tape'; 'cloth'; 'mug';}, ...
             {'car'; 'trash'; 'jacket'; 'pine'; 'trunk'}], 'VariableNames', {'cue','target'});
         KbQueueCreate;
-        KbQueueStart;
         %% Screen
         text = ['Welcome to the experiment!' ...
             '\n\nIn this experiment, you will be shown pairs of words.' ...
             '\nYour task is to learn these pairs, so that you will be able to remember them later on a test.'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
-        KbQueueWait;
+        KbQueueStart;        
+        listen(input.debugLevel, rob);
+        
 
         %% Screen
         KbQueueStop;
@@ -21,7 +25,7 @@ switch phase_name
             '\n\nThe pairs you study will be grouped into "lists" of 20 pairs, and you will study each pair one at a time.'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
 
         %% Screen
         KbQueueStop;
@@ -31,7 +35,7 @@ switch phase_name
             '\n\nTry to do this for every pair you see.'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
        
         %% Screen
         KbQueueStop;
@@ -40,12 +44,12 @@ switch phase_name
         DrawFormattedText(window, text,constants.leftMargin, constants.winRect(4)*.25, [],constants.wrapat,[],[],1.5);
         Screen('Flip', window);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         study(data, window, constants);
         DrawFormattedText(window, 'Press any key to continue', 'center', constants.winRect(4)*.9, [],constants.wrapat,[],[],1.5);
         Screen('Flip',window);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         
         %% Screen
         KbQueueStop;
@@ -54,7 +58,7 @@ switch phase_name
             '\n\nFor other pairs, you will take a practice test where you try to remember a word that is missing from the pair.'];
         drawInstructions(text, 'any key', constants.readtime*2, window, constants);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         
         %% Screen
         KbQueueStop;
@@ -64,7 +68,7 @@ switch phase_name
             '\n\nIf you do not type anything after 8 seconds, the test will automatically continue to the next pair.'];
         drawInstructions(text, 'any key', constants.readtime*2, window, constants);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         
         %% Screen
         KbQueueStop;
@@ -106,7 +110,7 @@ switch phase_name
         DrawFormattedText(window, 'Press any key to continue', 'center', constants.winRect(4)*.9);
         Screen('Flip',window);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
 
         %% Screen
         KbQueueStop;
@@ -118,7 +122,7 @@ switch phase_name
         text = [text, '\n\nYour job on the final test is to recall the missing word from the pair and type it in, just like on the practice test.'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         
         %% Screen
         KbQueueStop;
@@ -127,7 +131,7 @@ switch phase_name
             '\n\nWhen the break is finished, your game will pause and the experiment will resume where you left off'];
         drawInstructions(text, 'any key', constants.readtime, window, constants);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         
         %% Screen
         KbQueueStop;
@@ -140,11 +144,10 @@ switch phase_name
         koi(KbName('RETURN'))=1;
         KbQueueCreate([], koi);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         KbQueueRelease;
     
     case 'final'
-        input = varargin{1};
         if strcmp('immediate', input.group)
             text = 'Its time for the final test on this list of pairs.';
         else
@@ -158,7 +161,7 @@ switch phase_name
         text = 'Welcome back! Its time to resume the experiment.';
         drawInstructions(text, 'any key', constants.ifi, window, constants);
         KbQueueStart;
-        KbQueueWait;
+        listen(input.debugLevel, rob);
         KbQueueRelease;
            
     case 'bye'
@@ -178,5 +181,15 @@ function drawInstructions(text, advanceKey, when, window, constants, varargin)
     vbl = Screen('Flip',window,[],1);
     msg = strjoin({'Press' advanceKey, 'to continue'}, ' ');
     DrawFormattedText(window, msg, 'center', constants.winRect(4)*.9, [], constants.wrapat, [],[], 1.5);
-    Screen('Flip',window, vbl + when);
+    Screen('Flip',window, vbl + when - (constants.ifi/2));
+end
+
+function listen(debugLevel, varargin)
+    if debugLevel < 3
+        KbQueueWait;
+    else
+        rob = varargin{1};
+        rob.keyPress(java.awt.event.KeyEvent.VK_ENTER);
+        rob.keyRelease(java.awt.event.KeyEvent.VK_ENTER);
+    end
 end

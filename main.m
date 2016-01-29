@@ -189,7 +189,7 @@ constants.firstRun = 1;
 
 %% Give the instructions %%
 try
-    giveInstructions('intro', inputHandler, window, constants, input)
+    giveInstructions('intro', input, inputHandler, window, constants)
     % set up the keyboard
     setupTestKBQueue;
 %% Main Loop %%
@@ -206,7 +206,7 @@ try
 
         if  strcmp('immediate', input.group)
             finalListIndex = finalLists.list == i;
-            giveInstructions('final', inputHandler, window, constants, input);
+            giveInstructions('final', input, inputHandler, window, constants);
             [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
             data.onset(finalListIndex) = onset;
             data.response(finalListIndex) = response;
@@ -214,20 +214,20 @@ try
             data.lastPress(finalListIndex) = lastPress;         
             if i== 3 || i ==6
                 [window, constants] = gamebreak(window, constants);
-                giveInstructions('resume', [], window, constants);
+                giveInstructions('resume', input, [], window, constants);
                 setupTestKBQueue;
             end
         else
             if i == 5 || i == 10
                 [window, constants] = gamebreak(window, constants);
-                giveInstructions('resume', [], window, constants); 
+                giveInstructions('resume', input, [], window, constants); 
                 setupTestKBQueue;
             end
             if i == 10 % if its the last list
                 for j = 1:10
                     % Take the final test
                     finalListIndex = finalLists.list == j;
-                    giveInstructions('final', inputHandler, window, constants, input);
+                    giveInstructions('final', input, inputHandler, window, constants);
                     [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
                     data.onset(finalListIndex) = onset;
                     data.response(finalListIndex) = response;
@@ -256,7 +256,7 @@ try
     writetable(pracLists(~testRows,:),  [ constants.fName '_TestPractice.csv' ])
     writetable(finalLists, [ constants.fName '_Final.csv' ])
     
-    giveInstructions('bye', [], window, constants);
+    giveInstructions('bye', input, [], window, constants);
     cleanup(constants)
     exit_stat=0;
 catch
