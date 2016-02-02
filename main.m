@@ -12,7 +12,6 @@ input = ip.Results;
 defaults = ip.UsingDefaults;
 
 constants.exp_onset = GetSecs; % record the time the experiment began
-KbName('UnifyKeyNames') % use a standard set of keyname/key positions
 rng('shuffle'); % set up and seed the randon number generator, so lists get properly permuted
 
 % Get full path to the directory the function lives in, and add it to the path
@@ -104,7 +103,7 @@ if input.debugLevel >= 4
     constants.cueDur = (1/hertz); % pairs on screen for only 1 flip
     constants.countdownSpeed = constants.cueDur;
     constants.readtime = constants.cueDur;
-    constants.ISI = .5;        
+    constants.ISI = constants.cueDur;
 end
     
 %% Set up the experimental design %%
