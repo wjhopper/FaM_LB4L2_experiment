@@ -1,5 +1,7 @@
 function [onset, response, firstPress, lastPress] = testing(data, inputHandler, window, constants)
 
+% Switch to high priority mode and increase the fontsize
+oldPriority = Priority(1);
 oldsize = Screen('TextSize', window, 40);
 onset = nan(size(data,1),1);
 response = cell(size(data,1),1);
@@ -32,6 +34,7 @@ for j = 1:size(data,1)
     [response{j}, firstPress(j), lastPress(j)] = cleanResponses(string, rt);
 end
 Screen('TextSize', window, oldsize); % reset text size
+Priority(oldPriority);  % reset priority level
 end
 
 function [response, firstPress, lastPress] = cleanResponses(string, RT)
