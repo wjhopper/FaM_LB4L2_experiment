@@ -247,7 +247,7 @@ try
                     data.lastPress(finalListIndex) = lastPress;
                     %  shortbreak
                     if j < 10
-                        countdown('Take a short break and the test will resume in', constants.finalTestBreakCountdown,...
+                        countdown('Take a short break, the test will resume in', constants.finalTestBreakCountdown,...
                             constants.countdownSpeed,  window, constants);
                     end
                 end
@@ -381,7 +381,9 @@ function setupTestKBQueue
     KbQueueCreate([], keysOfInterest);
 end
 function [window, constants] = gamebreak(window, constants)
-    countdown('It''s time for a break! Play some Tetris and relax.\n\nIf you dont know how to play, click the ''Help'' button on the Tetris window', ...
+    countdown(['Time for a break! Play some Tetris and relax.\n\n', ...
+        'If you dont know how to play, click the ''Help'' button',...
+        '\non the Tetris window that pops up'], ...
         constants.gamebreakCountdown ,constants.countdownSpeed, window, constants);
     sca; % this is good, don't remove this!!
     if ~isfield(constants, 'figureStruct')

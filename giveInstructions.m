@@ -149,9 +149,10 @@ switch phase_name
     
     case 'final'
         if strcmp('immediate', input.group)
-            text = 'Its time for the final test on this list of pairs.';
+            text = 'It''s time for the final test on this list of pairs.';
         else
-            text = 'Now it''s time for the final test. You will be test on pairs from all the lists you''ve studied in the entire experiment.';
+            text = ['It''s time for the final test!',...
+                '\nNow, you will be tested on pairs from all the lists you''ve learned.'];
         end
         text = [text '\n\nThe final test will begin in'];
         countdown(text, constants.finalTestCountdown, constants.countdownSpeed, window, constants)
