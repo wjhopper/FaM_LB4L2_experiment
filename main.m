@@ -49,11 +49,7 @@ else
     assert(validSubNum, msg)
 end
 
-% now that we have all the input and its passed validation, we can have a file path!
-% Remember that this is a file path WITHOUT AN EXTENSION!!!!
-constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group',num2str(input.group)},'_'));
 
-clear guiInput msg validSubNum subjectValidator
 %% Ask for demographics if we're not debugging heavily
 if input.debugLevel <= 2;
     demographics(constants.savePath);
@@ -64,7 +60,12 @@ if ismember('group', ip.UsingDefaults)
     groups = {'immediate','delay'};
     input.group = groups{randi(2,1,1)};
 end
-clear ip defaults groups varargin
+
+% now that we have all the input and its passed validation, we can have a file path!
+% Remember that this is a file path WITHOUT AN EXTENSION!!!!
+constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group', input.group},'_'));
+
+clear ip defaults groups varargin guiInput msg validSubNum subjectValidator
 
 %% Debug Levels
 % Level 0: normal experiment
