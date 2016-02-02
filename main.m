@@ -200,8 +200,6 @@ constants.firstRun = 1;
 %% Give the instructions %%
 try
     giveInstructions('intro', input, inputHandler, window, constants)
-    sca;
-    return
     % set up the keyboard
     setupTestKBQueue;
 %% Main Loop %%
@@ -236,10 +234,10 @@ try
                 setupTestKBQueue;
             end
             if i == 10 % if its the last list
+                giveInstructions('final', input, inputHandler, window, constants);
                 for j = 1:10
                     % Take the final test
                     finalListIndex = finalLists.list == j;
-                    giveInstructions('final', input, inputHandler, window, constants);
                     [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
                     data.onset(finalListIndex) = onset;
                     data.response(finalListIndex) = response;
