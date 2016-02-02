@@ -24,11 +24,11 @@ end
                             advance = 1;
                         end
                     case 39  %39 is right arrow
-                        if ~isempty(string)
+                        if isempty(string)
                             advance = 1;
                         end
                     case 8 %8 is BACKSPACE
-                        if ~isempty(string)
+                        if ~strcmp('',string)
                             string = string(1:end-1);       
                             rt = rt(1:end-1);
                             redraw = 1;
