@@ -187,11 +187,11 @@ assert(length(unique(pracLists.target)) == size(pracLists,1), 'Not all targets p
 % Only 2 targets from each condition should be practiced (minus the control condition which gets nothing)
 assert(size(pracLists,1)== .4*size(studyLists,1), 'Too many pairs set to receive practice')
 
+% add the columns for the reponses
+pracLists = [pracLists, repmat(response,size(pracLists,1),1)];
 % Duplicate the practice lists since each item gets two practice chances
 pracLists = [ repmat(pracLists, 2, 1), ...
     table([ones(size(pracLists,1),1) ; repmat(2,size(pracLists,1),1)], 'VariableNames', {'round'})];
-% add the columns for the reponses
-pracLists = [pracLists, repmat(response,size(pracLists,1),1)];
 % counterbalance the order of the study/test practices
 if mod(input.subject, 2) == 0 
     constants.pracOrder = repmat({'S';'T'}, 5 ,1);
@@ -277,8 +277,8 @@ try
     % write the data to file
     writetable(studyLists, [ constants.fName '_Study.csv' ])
     testRows = strcmp('T', pracLists.practice);
-    writetable(pracLists(testRows,:), [ constants.fName '_StudyPractice.csv' ])
-    writetable(pracLists(~testRows,:),  [ constants.fName '_TestPractice.csv' ])
+    writetable(pracLists(~testRows,:), [ constants.fName '_StudyPractice.csv' ])
+    writetable(pracLists(testRows,:),  [ constants.fName '_TestPractice.csv' ])
     writetable(finalLists, [ constants.fName '_Final.csv' ])
     
     giveInstructions('bye', input, [], window, constants);
