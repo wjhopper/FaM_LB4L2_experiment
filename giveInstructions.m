@@ -3,6 +3,8 @@ function []= giveInstructions(phase_name, input, inputHandler, window, constants
 % oldTextSize=Screen('TextSize', window, 28);
 if input.debugLevel >= 3
     rob = java.awt.Robot;
+else
+    rob = [];
 end
 
 switch phase_name
