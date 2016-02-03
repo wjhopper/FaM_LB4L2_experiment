@@ -233,10 +233,10 @@ try
             finalListIndex = finalLists.list == i;
             giveInstructions('final', input, inputHandler, window, constants);
             [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
-            data.onset(finalListIndex) = onset;
-            data.response(finalListIndex) = response;
-            data.firstPress(finalListIndex) = firstPress;
-            data.lastPress(finalListIndex) = lastPress;         
+            finalLists.onset(finalListIndex) = onset;
+            finalLists.response(finalListIndex) = response;
+            finalLists.firstPress(finalListIndex) = firstPress;
+            finalLists.lastPress(finalListIndex) = lastPress;         
             if i== 3 || i ==6
                 [window, constants] = gamebreak(window, constants);
                 giveInstructions('resume', input, [], window, constants);
@@ -254,10 +254,10 @@ try
                     % Take the final test
                     finalListIndex = finalLists.list == j;
                     [onset, response, firstPress, lastPress] = testing(finalLists(finalListIndex,:), inputHandler, window, constants);
-                    data.onset(finalListIndex) = onset;
-                    data.response(finalListIndex) = response;
-                    data.firstPress(finalListIndex) = firstPress;
-                    data.lastPress(finalListIndex) = lastPress;
+                    finalLists.onset(finalListIndex) = onset;
+                    finalLists.response(finalListIndex) = response;
+                    finalLists.firstPress(finalListIndex) = firstPress;
+                    finalLists.lastPress(finalListIndex) = lastPress;
                     %  shortbreak
                     if j < 10
                         countdown('Take a short break, the test will resume in', constants.finalTestBreakCountdown,...
