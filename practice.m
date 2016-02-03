@@ -1,8 +1,8 @@
 function data = practice(data, first, inputHandler, window, constants)
 
 for i = 1:2
-    studyRows = strcmp(data.practice,'S') & data.pracRound == i;
-    testRows = strcmp(data.practice,'T') & data.pracRound == i;
+    studyRows = strcmp(data.practice,'S') & data.round == i;
+    testRows = strcmp(data.practice,'T') & data.round == i;
     if strcmp('S', first)
         countdown('It''s time to restudy pairs from the last list', constants.practiceCountdown,...
             constants.countdownSpeed,  window, constants);

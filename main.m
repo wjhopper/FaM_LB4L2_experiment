@@ -188,7 +188,8 @@ assert(length(unique(pracLists.target)) == size(pracLists,1), 'Not all targets p
 assert(size(pracLists,1)== .4*size(studyLists,1), 'Too many pairs set to receive practice')
 
 % Duplicate the practice lists since each item gets two practice chances
-pracLists = [repmat(pracLists, 2),  table([ones(size(pracLists,1),1) ; repmat(2,size(pracLists,1),1)], 'VariableNames', {'pracRound'})];
+pracLists = [ repmat(pracLists, 2, 1), ...
+    table([ones(size(pracLists,1),1) ; repmat(2,size(pracLists,1),1)], 'VariableNames', {'round'})];
 % add the columns for the reponses
 pracLists = [pracLists, repmat(response,size(pracLists,1),1)];
 % counterbalance the order of the study/test practices
