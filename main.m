@@ -1,6 +1,11 @@
 function exit_stat = main(varargin)
 
-exit_stat = 1; % assume that we exited badly if ever exit before this gets reassigned
+exit_stat = 1;
+if Screen('NominalFrameRate', max(Screen('Screens'))) ~= 60
+    errordlg('Monitor refresh rate must be set to 60hz');
+    return;
+end
+ % assume that we exited badly if ever exit before this gets reassigned
 % use the inputParser class to deal with arguments
 ip = inputParser;
 %#ok<*NVREPL> dont warn about addParamValue
