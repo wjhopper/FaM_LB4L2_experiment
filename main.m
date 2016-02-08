@@ -68,7 +68,7 @@ end
 
 % now that we have all the input and its passed validation, we can have a file path!
 % Remember that this is a file path WITHOUT AN EXTENSION!!!!
-constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject), 'Group', input.group},'_'));
+constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject)},'_'));
 
 clear ip defaults groups varargin guiInput msg validSubNum subjectValidator
 
@@ -139,7 +139,7 @@ response = table({''}, NaN, NaN, 'VariableNames',{'response','firstPress' 'lastP
 % Generate list ID variable
 listID = repmat(1:constants.nLists, constants.nTrials/constants.nLists, 1);
 % Create the study list table
-studyLists = [table(repmat(input.subject, constants.nTrials, 1), 'VariableNames', {'subject'}), ... % subject column
+studyLists = [table(repmat(input.subject, constants.nTrials, 1), repmat(input.group, constants.nTrials, 1), 'VariableNames', {'subject', 'group'}), ... % subject & group columns
     table(listID(:),'VariableNames', {'list'}), ... % list column
     table(stimlist.WORD(1:constants.nTrials), 'VariableNames', {'cue'}), ... % Cue words
     cell2table(cell(200, 2), 'VariableNames', {'target', 'practice'}), ... % target &  practice columns, (blank for now)
