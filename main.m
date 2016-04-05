@@ -8,10 +8,12 @@ end
  % assume that we exited badly if ever exit before this gets reassigned
 % use the inputParser class to deal with arguments
 ip = inputParser;
+ip.KeepUnmatched = true;
 %#ok<*NVREPL> dont warn about addParamValue
 addParamValue(ip,'subject', 0, @isnumeric);
 addParamValue(ip,'group', [], @ischar);
 addParamValue(ip,'debugLevel',0, @isnumeric);
+addParamValue(ip,'robotType', 'Good', @(x) sum(strcmp(x, {'Good','Bad','Chaotic'}))==1);
 parse(ip,varargin{:}); 
 input = ip.Results;
 defaults = ip.UsingDefaults;
@@ -70,7 +72,7 @@ end
 % Remember that this is a file path WITHOUT AN EXTENSION!!!!
 constants.fName=fullfile(constants.savePath, strjoin({'Subject', num2str(input.subject)},'_'));
 
-clear ip defaults groups varargin guiInput msg validSubNum subjectValidator
+clear defaults groups varargin guiInput msg validSubNum subjectValidator
 
 %% Debug Levels
 % Level 0: normal experiment
@@ -99,13 +101,13 @@ if input.debugLevel >= 2
     constants.gamebreak = 5;
 end
 
-% Level 3: Good robot input
-if input.debugLevel >= 3
-    inputHandler = makeInputHandlerFcn('Robot');
+% Level 4: Robot input
+if input.debugLevel >= 4
+    inputHandler = makeInputHandlerFcn([input.robotType,'Robot']);
 end
 
 % Level 4: Extreme debugging, useful for knowing if flips are timed ok.
-if input.debugLevel >= 4
+if input.debugLevel >= 5
     constants.cueDur = (1/hertz); % pairs on screen for only 1 flip
     constants.countdownSpeed = constants.cueDur;
     constants.readtime = constants.cueDur;

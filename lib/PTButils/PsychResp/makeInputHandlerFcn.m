@@ -2,10 +2,15 @@ function handlerFcn = makeInputHandlerFcn(handlerName)
 switch handlerName
     case 'KbQueue'
         handlerFcn = @kbQueueHandler;
-    case 'Robot'
+    case 'GoodRobot'
         rob = java.awt.Robot;
         n = 1;
-        handlerFcn = @Robot;        
+        handlerFcn = @GoodRobot;
+    case 'BadRobot'
+        rob = java.awt.Robot;
+        n = 1;
+        handlerFcn = @BadRobot;
+        
 end
 
     function [string, rt, advance, redraw]= kbQueueHandler(device, string, rt, varargin) 
@@ -84,9 +89,9 @@ end
         end
     end
 
-    function [string, rt, advance, redraw] = Robot( device, string, rt, varargin)
+    function [string, rt, advance, redraw] = GoodRobot( device, string, rt, varargin)
 
-    % This function is a wrapper around kbQueueaHandler, which provides
+    % This function is a wrapper around kbQueueHandler, which provides
     % automatic keyboard input by simulating a keypress of each character in the given response string
     % with Java Robot object instead of waiting for a human.
     %
@@ -107,6 +112,45 @@ end
     % the new answer.
 
         answer = varargin{1};
+        if n <= length(answer)
+            eval([ 'rob.keyPress(java.awt.event.KeyEvent.VK_', upper(answer(n)), ');' ]);
+            eval([ 'rob.keyRelease(java.awt.event.KeyEvent.VK_', upper(answer(n)), ');' ]);        
+            [string, rt, advance, redraw] = kbQueueHandler(device, string, rt);
+            n = n + 1;
+        else
+            rob.keyPress(java.awt.event.KeyEvent.VK_ENTER);
+            rob.keyRelease(java.awt.event.KeyEvent.VK_ENTER);           
+            [string, rt, advance, redraw] = kbQueueHandler(device, string, rt);
+            n = 1;
+        end
+   
+    end
+
+
+    function [string, rt, advance, redraw] = BadRobot(device, string, rt, varargin)
+
+    % This function is a wrapper around kbQueueHandler, which provides
+    % automatic keyboard input by simulating a keypress of each character in the given response string
+    % with Java Robot object instead of waiting for a human.
+    %
+    % The tricky bit here is that it doesn't loop over each character in the string,
+    % Instead, this function is a closure and we share a stateful indexing variable n
+    % with the parent function, makeInputHandlerFcn. n starts off set to 1 in the
+    % parent function. If n is less than or equal to  the length of the answer,
+    % we construct the robot press and release calls for that character, hand off
+    % to the actual input handler function to record it, and increment the indexing
+    % variable n (e.g. n = n + 1 =2). This increment is remembered the next
+    % time we enter the function, because this function is a closure.
+    %
+    % When n grows larger than the length of the answer string, we press
+    % and release the Enter key to confirm the previously recorded input
+    % and advance. Before returning, n is reset to 1, and this reset is
+    % remembered the next time we enter this function (which should be for
+    % a new answer to input) and so we begin with inputing the first character of
+    % the new answer.
+
+        answer = randsample('abcdefghijklmnopqrstuvwxys', 4);
+        WaitSecs('UntilTime', GetSecs + .1);
         if n <= length(answer)
             eval([ 'rob.keyPress(java.awt.event.KeyEvent.VK_', upper(answer(n)), ');' ]);
             eval([ 'rob.keyRelease(java.awt.event.KeyEvent.VK_', upper(answer(n)), ');' ]);        
